@@ -10,6 +10,9 @@ import { AlertDetailView } from '@/components/dashboard/AlertDetailView';
 import { DashboardHeader, type Environment, type DateRange } from '@/components/dashboard/DashboardHeader';
 import { APIConsumptionChart, type StatusDayData } from '@/components/dashboard/APIConsumptionChart';
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
+import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
+import { VendorAPIsTab } from '@/components/dashboard/VendorAPIsTab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
 import { toast } from '@/hooks/use-toast';
@@ -187,82 +190,100 @@ const Index = () => {
   // Overview
   return renderWithHeader(
     <div className="p-4 md:p-6 space-y-6">
-      {/* Subtitle - desktop only */}
-      <p className="text-sm text-muted-foreground hidden md:block">
-        Monitoring {filteredAPIs.length} APIs across {filteredClientData.length} clients
-      </p>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="comparison">Comparison</TabsTrigger>
+          <TabsTrigger value="vendor-apis">Vendor APIs</TabsTrigger>
+        </TabsList>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <MetricCard
-          title="Total API Calls"
-          value={formatNumber(filteredStats.totalCalls)}
-          change={filteredStats.totalChange}
-          subtitle="Last 24 hours"
-          icon={<Zap className="w-5 h-5" />}
-        />
-        <MetricCard
-          title="Active APIs"
-          value={filteredStats.activeAPIs}
-          subtitle={`${filteredStats.healthyCount} healthy`}
-          icon={<Server className="w-5 h-5" />}
-          status="healthy"
-        />
-        <MetricCard
-          title="Warnings"
-          value={filteredStats.warningCount}
-          subtitle="Threshold breaches"
-          icon={<AlertTriangle className="w-5 h-5" />}
-          status={filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
-          onClick={filteredStats.warningCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'warning' }) : undefined}
-        />
-        <MetricCard
-          title="Critical Alerts"
-          value={filteredStats.criticalCount}
-          subtitle="Requires attention"
-          icon={<Activity className="w-5 h-5" />}
-          status={filteredStats.criticalCount > 0 ? 'critical' : 'neutral'}
-          onClick={filteredStats.criticalCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'critical' }) : undefined}
-        />
-      </div>
+        <TabsContent value="overview" className="space-y-6 mt-0">
+          {/* Subtitle - desktop only */}
+          <p className="text-sm text-muted-foreground hidden md:block">
+            Monitoring {filteredAPIs.length} APIs across {filteredClientData.length} clients
+          </p>
 
-      {/* API Consumption - Stacked Bar Chart */}
-      <APIConsumptionChart
-        apis={filteredAPIs}
-        usageSource={usageSource}
-        onDayClick={(dayData, apis) => setDrillDown({ dayData, apis })}
-      />
+          {/* Metric Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <MetricCard
+              title="Total API Calls"
+              value={formatNumber(filteredStats.totalCalls)}
+              change={filteredStats.totalChange}
+              subtitle="Last 24 hours"
+              icon={<Zap className="w-5 h-5" />}
+            />
+            <MetricCard
+              title="Active APIs"
+              value={filteredStats.activeAPIs}
+              subtitle={`${filteredStats.healthyCount} healthy`}
+              icon={<Server className="w-5 h-5" />}
+              status="healthy"
+            />
+            <MetricCard
+              title="Warnings"
+              value={filteredStats.warningCount}
+              subtitle="Threshold breaches"
+              icon={<AlertTriangle className="w-5 h-5" />}
+              status={filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
+              onClick={filteredStats.warningCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'warning' }) : undefined}
+            />
+            <MetricCard
+              title="Critical Alerts"
+              value={filteredStats.criticalCount}
+              subtitle="Requires attention"
+              icon={<Activity className="w-5 h-5" />}
+              status={filteredStats.criticalCount > 0 ? 'critical' : 'neutral'}
+              onClick={filteredStats.criticalCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'critical' }) : undefined}
+            />
+          </div>
 
-      {/* Aggregated Usage Chart */}
-      <UsageChart
-        dailyData={aggregatedDailyData}
-        weeklyData={aggregatedWeeklyData}
-        monthlyData={aggregatedMonthlyData}
-        title="Usage Trends"
-        usageSource={usageSource}
-      />
+          {/* API Consumption - Stacked Bar Chart */}
+          <APIConsumptionChart
+            apis={filteredAPIs}
+            usageSource={usageSource}
+            onDayClick={(dayData, apis) => setDrillDown({ dayData, apis })}
+          />
 
-      {/* Two-column: Client Usage | API Usage */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ClientList
-          clients={filteredClientData}
-          onSelectClient={(name) => setView({ type: 'client-detail', clientName: name })}
-        />
-        <APIRankingList
-          apis={filteredSortedAPIs}
-          onSelectAPI={(id) => setView({ type: 'api-detail', apiId: id })}
-        />
-      </div>
+          {/* Aggregated Usage Chart */}
+          <UsageChart
+            dailyData={aggregatedDailyData}
+            weeklyData={aggregatedWeeklyData}
+            monthlyData={aggregatedMonthlyData}
+            title="Usage Trends"
+            usageSource={usageSource}
+          />
 
-      {/* Drill-Down Drawer */}
-      {drillDown && (
-        <DrillDownDrawer
-          dayData={drillDown.dayData}
-          apis={drillDown.apis}
-          open={!!drillDown}
-          onClose={() => setDrillDown(null)}
-        />
-      )}
+          {/* Two-column: Client Usage | API Usage */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ClientList
+              clients={filteredClientData}
+              onSelectClient={(name) => setView({ type: 'client-detail', clientName: name })}
+            />
+            <APIRankingList
+              apis={filteredSortedAPIs}
+              onSelectAPI={(id) => setView({ type: 'api-detail', apiId: id })}
+            />
+          </div>
+
+          {/* Drill-Down Drawer */}
+          {drillDown && (
+            <DrillDownDrawer
+              dayData={drillDown.dayData}
+              apis={drillDown.apis}
+              open={!!drillDown}
+              onClose={() => setDrillDown(null)}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="comparison" className="mt-0">
+          <ComparisonTab apis={filteredAPIs} />
+        </TabsContent>
+
+        <TabsContent value="vendor-apis" className="mt-0">
+          <VendorAPIsTab apis={filteredAPIs} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

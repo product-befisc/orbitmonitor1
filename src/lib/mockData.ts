@@ -4,6 +4,8 @@ export interface APIData {
   id: string;
   name: string;
   client: string;
+  vendor?: string;
+  isVendorAPI?: boolean;
   status: 'healthy' | 'warning' | 'critical';
   currentCalls: number;
   previousCalls: number;
