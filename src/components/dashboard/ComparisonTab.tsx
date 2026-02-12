@@ -51,23 +51,15 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
     return num.toString();
   };
 
-  // Compute aggregate default data (all APIs combined, current vs previous month)
+  // Compute aggregate default data using previousCalls from daily data
   const aggregateData = useMemo(() => {
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-    const prevMonthStart = startOfMonth(subMonths(now, 1));
-
     let currentVolume = 0;
     let previousVolume = 0;
 
     apis.forEach(api => {
       api.dailyData.forEach(d => {
-        const date = new Date(d.date);
-        if (date >= currentMonthStart && date <= now) currentVolume += d.calls;
-        const dayOfMonth = date.getDate();
-        if (date >= prevMonthStart && date < currentMonthStart && dayOfMonth <= now.getDate()) {
-          previousVolume += d.calls;
-        }
+        currentVolume += d.calls;
+        previousVolume += d.previousCalls;
       });
     });
 
@@ -77,26 +69,14 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
 
   // Build comparison chart data
   const chartData = useMemo(() => {
-    const now = new Date();
-    const currentMonthStart = startOfMonth(now);
-    const prevMonthStart = startOfMonth(subMonths(now, 1));
-
     const computeVolumes = (relevantAPIs: APIData[]) => {
       let currentVolume = 0;
       let previousVolume = 0;
 
       relevantAPIs.forEach(api => {
         api.dailyData.forEach(d => {
-          const date = new Date(d.date);
-          if (datePreset === 'custom' && customFrom && customTo) {
-            if (date >= customFrom && date <= customTo) currentVolume += d.calls;
-          } else {
-            if (date >= currentMonthStart && date <= now) currentVolume += d.calls;
-            const dayOfMonth = date.getDate();
-            if (date >= prevMonthStart && date < currentMonthStart && dayOfMonth <= now.getDate()) {
-              previousVolume += d.calls;
-            }
-          }
+          currentVolume += d.calls;
+          previousVolume += d.previousCalls;
         });
       });
 
@@ -120,7 +100,7 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
         return { name: apiName, current: currentVolume, previous: previousVolume, change };
       });
     }
-  }, [mode, selectedClients, selectedAPIs, apis, datePreset, customFrom, customTo]);
+  }, [mode, selectedClients, selectedAPIs, apis]);
 
   // Use aggregate when nothing selected, otherwise use selection
   const displayData = chartData.length > 0 ? chartData : aggregateData;
