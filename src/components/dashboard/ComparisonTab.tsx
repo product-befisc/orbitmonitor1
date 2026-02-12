@@ -51,7 +51,31 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
     return num.toString();
   };
 
-  // Build comparison chart data — always include current & previous
+  // Compute aggregate default data (all APIs combined, current vs previous month)
+  const aggregateData = useMemo(() => {
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const prevMonthStart = startOfMonth(subMonths(now, 1));
+
+    let currentVolume = 0;
+    let previousVolume = 0;
+
+    apis.forEach(api => {
+      api.dailyData.forEach(d => {
+        const date = new Date(d.date);
+        if (date >= currentMonthStart && date <= now) currentVolume += d.calls;
+        const dayOfMonth = date.getDate();
+        if (date >= prevMonthStart && date < currentMonthStart && dayOfMonth <= now.getDate()) {
+          previousVolume += d.calls;
+        }
+      });
+    });
+
+    const change = previousVolume > 0 ? ((currentVolume - previousVolume) / previousVolume) * 100 : 0;
+    return [{ name: 'All APIs (Aggregate)', current: currentVolume, previous: previousVolume, change }];
+  }, [apis]);
+
+  // Build comparison chart data
   const chartData = useMemo(() => {
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
@@ -97,6 +121,10 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
       });
     }
   }, [mode, selectedClients, selectedAPIs, apis, datePreset, customFrom, customTo]);
+
+  // Use aggregate when nothing selected, otherwise use selection
+  const displayData = chartData.length > 0 ? chartData : aggregateData;
+  const isShowingAggregate = chartData.length === 0;
 
   const items = mode === 'clients' ? clients : apiNames;
   const selected = mode === 'clients' ? selectedClients : selectedAPIs;
@@ -232,118 +260,111 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
         </CardContent>
       </Card>
 
-      {/* Chart + summary cards */}
-      {chartData.length > 0 ? (
-        <div className="space-y-5">
-          {/* Bar chart — always shows current & previous side by side */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">Usage Volume Comparison</CardTitle>
-                  <CardDescription className="text-xs">
-                    {datePreset === 'current-vs-previous'
-                      ? 'Current month (blue) vs Previous month (gray) — same date range'
-                      : 'Selected date range volume'}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-sm bg-primary inline-block" />
-                    Current
-                  </span>
-                  {datePreset === 'current-vs-previous' && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-muted-foreground/40 inline-block" />
-                      Previous
-                    </span>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[380px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }} barGap={2} barCategoryGap="20%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      angle={chartData.length > 5 ? -20 : 0}
-                      textAnchor={chartData.length > 5 ? 'end' : 'middle'}
-                      height={chartData.length > 5 ? 60 : 30}
-                      axisLine={{ stroke: 'hsl(var(--border))' }}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      tickFormatter={v => formatNumber(v)}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: 12,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                      }}
-                      formatter={(value: number, name: string) => [value.toLocaleString(), name === 'previous' ? 'Previous Month' : 'Current Month']}
-                      cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
-                    />
-                    <Bar dataKey="previous" name="Previous Month" fill="hsl(var(--muted-foreground)/0.3)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="current" name="Current Month" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Summary cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {chartData.map(item => {
-              const isUp = item.change >= 0;
-              return (
-                <Card key={item.name} className="glass-card">
-                  <CardContent className="p-4">
-                    <p className="font-medium text-sm truncate mb-3">{item.name}</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Current</p>
-                        <p className="text-lg font-bold text-primary">{formatNumber(item.current)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Previous</p>
-                        <p className="text-lg font-bold text-muted-foreground">{formatNumber(item.previous)}</p>
-                      </div>
-                    </div>
-                    <div className={cn(
-                      'flex items-center gap-1 mt-3 text-xs font-medium',
-                      isUp ? 'text-success' : 'text-destructive'
-                    )}>
-                      {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                      {isUp ? '+' : ''}{item.change.toFixed(1)}% change
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+      {/* Chart + summary cards — always visible */}
+      <div className="space-y-5">
+        {isShowingAggregate && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+            <BarChart3 className="w-3.5 h-3.5" />
+            Showing aggregate usage across all APIs. Select specific {mode === 'clients' ? 'clients' : 'APIs'} above to compare.
           </div>
-        </div>
-      ) : (
-        <Card className="glass-card border-dashed">
-          <CardContent className="py-16 text-center">
-            <BarChart3 className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">
-              Select {mode === 'clients' ? 'clients' : 'APIs'} above to compare their usage volumes
-            </p>
-            <p className="text-muted-foreground/60 text-xs mt-1">
-              Click on any chip to add it to comparison
-            </p>
+        )}
+
+        {/* Bar chart */}
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">
+                  {isShowingAggregate ? 'Aggregate Usage — Current vs Previous Month' : 'Usage Volume Comparison'}
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  {datePreset === 'current-vs-previous' || isShowingAggregate
+                    ? 'Current month till today (blue) vs same dates previous month (gray)'
+                    : 'Selected date range volume'}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-primary inline-block" />
+                  Current
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-muted-foreground/40 inline-block" />
+                  Previous
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[380px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={displayData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }} barGap={2} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    angle={displayData.length > 5 ? -20 : 0}
+                    textAnchor={displayData.length > 5 ? 'end' : 'middle'}
+                    height={displayData.length > 5 ? 60 : 30}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={v => formatNumber(v)}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: 12,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                    formatter={(value: number, name: string) => [value.toLocaleString(), name === 'previous' ? 'Previous Month' : 'Current Month']}
+                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
+                  />
+                  <Bar dataKey="previous" name="Previous Month" fill="hsl(var(--muted-foreground)/0.3)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="current" name="Current Month" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Summary cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {displayData.map(item => {
+            const isUp = item.change >= 0;
+            return (
+              <Card key={item.name} className="glass-card">
+                <CardContent className="p-4">
+                  <p className="font-medium text-sm truncate mb-3">{item.name}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Current</p>
+                      <p className="text-lg font-bold text-primary">{formatNumber(item.current)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Previous</p>
+                      <p className="text-lg font-bold text-muted-foreground">{formatNumber(item.previous)}</p>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    'flex items-center gap-1 mt-3 text-xs font-medium',
+                    isUp ? 'text-success' : 'text-destructive'
+                  )}>
+                    {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    {isUp ? '+' : ''}{item.change.toFixed(1)}% change
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
