@@ -42,13 +42,17 @@ export function ClientList({ clients, onSelectClient }: ClientListProps) {
 
             <div className="text-right flex-shrink-0">
               <div className="font-semibold">{formatCalls(client.totalCalls)}</div>
-              <div className={cn(
-                'flex items-center justify-end gap-1 text-xs font-medium',
-                client.trend > 0 ? 'text-success' : client.trend < -10 ? 'text-destructive' : client.trend < 0 ? 'text-warning' : 'text-muted-foreground'
-              )}>
-                {client.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {client.trend > 0 ? '+' : ''}{client.trend.toFixed(1)}%
+              <div className="text-xs text-muted-foreground">
+                prev: {formatCalls(client.previousTotalCalls)}
               </div>
+            </div>
+
+            <div className={cn(
+              'flex items-center gap-1 text-xs font-medium flex-shrink-0',
+              client.trend > 0 ? 'text-success' : client.trend < -10 ? 'text-destructive' : client.trend < 0 ? 'text-warning' : 'text-muted-foreground'
+            )}>
+              {client.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {client.trend > 0 ? '+' : ''}{client.trend.toFixed(1)}%
             </div>
 
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

@@ -41,6 +41,7 @@ export function APIRankingList({ apis, onSelectAPI }: APIRankingListProps) {
 
             <div className="text-right flex-shrink-0">
               <span className="font-medium text-sm">{formatCalls(api.currentCalls)}</span>
+              <div className="text-[10px] text-muted-foreground">prev: {formatCalls(api.previousCalls)}</div>
             </div>
 
             <div className={cn(

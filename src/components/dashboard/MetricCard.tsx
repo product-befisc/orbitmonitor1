@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 interface MetricCardProps {
   title: string;
   value: string | number;
+  previousValue?: string | number;
   change?: number;
   subtitle?: string;
   icon?: React.ReactNode;
@@ -11,7 +12,7 @@ interface MetricCardProps {
   onClick?: () => void;
 }
 
-export function MetricCard({ title, value, change, subtitle, icon, status = 'neutral', onClick }: MetricCardProps) {
+export function MetricCard({ title, value, previousValue, change, subtitle, icon, status = 'neutral', onClick }: MetricCardProps) {
   const getTrendIcon = () => {
     if (change === undefined) return null;
     if (change > 0) return <TrendingUp className="w-4 h-4" />;
@@ -55,6 +56,11 @@ export function MetricCard({ title, value, change, subtitle, icon, status = 'neu
       <div className="flex items-end justify-between">
         <div>
           <p className="text-3xl font-semibold tracking-tight">{value}</p>
+          {previousValue !== undefined && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              prev: {previousValue}
+            </p>
+          )}
           {subtitle && (
             <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
           )}

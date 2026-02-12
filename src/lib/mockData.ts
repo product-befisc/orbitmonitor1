@@ -12,8 +12,8 @@ export interface APIData {
   threshold: number;
   relativeThreshold: number; // percentage drop threshold
   trend: number; // percentage change
-  dailyData: { date: string; calls: number }[];
-  weeklyData: { week: string; calls: number }[];
+  dailyData: { date: string; calls: number; previousCalls: number }[];
+  weeklyData: { week: string; calls: number; previousCalls: number }[];
   monthlyData: { month: string; calls: number; previousYear: number }[];
   statusBreakdown: { success: number; sourceDown: number; notFound: number; otherError: number };
   statusTimeline: { date: string; success: number; sourceDown: number; notFound: number; otherError: number }[];
@@ -62,29 +62,35 @@ const apiNames = [
   'Stock Tracker', 'Market Data', 'Trade Executor', 'Portfolio Manager'
 ];
 
-function generateDailyData(): { date: string; calls: number }[] {
+function generateDailyData(): { date: string; calls: number; previousCalls: number }[] {
   const data = [];
   const baseValue = Math.random() * 50000 + 10000;
+  const prevBaseValue = baseValue * (0.8 + Math.random() * 0.3); // previous period slightly different
   for (let i = 29; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     const variance = (Math.random() - 0.5) * 0.4;
+    const prevVariance = (Math.random() - 0.5) * 0.4;
     data.push({
       date: date.toISOString().split('T')[0],
-      calls: Math.round(baseValue * (1 + variance))
+      calls: Math.round(baseValue * (1 + variance)),
+      previousCalls: Math.round(prevBaseValue * (1 + prevVariance))
     });
   }
   return data;
 }
 
-function generateWeeklyData(): { week: string; calls: number }[] {
+function generateWeeklyData(): { week: string; calls: number; previousCalls: number }[] {
   const data = [];
   const baseValue = Math.random() * 300000 + 50000;
+  const prevBaseValue = baseValue * (0.8 + Math.random() * 0.3);
   for (let i = 11; i >= 0; i--) {
     const variance = (Math.random() - 0.5) * 0.3;
+    const prevVariance = (Math.random() - 0.5) * 0.3;
     data.push({
       week: `W${52 - i}`,
-      calls: Math.round(baseValue * (1 + variance))
+      calls: Math.round(baseValue * (1 + variance)),
+      previousCalls: Math.round(prevBaseValue * (1 + prevVariance))
     });
   }
   return data;
@@ -236,10 +242,11 @@ export function getTopClientsByUsage(apis: APIData[], topN: number = 10): { topC
 export interface ClientUsageData {
   client: string;
   totalCalls: number;
+  previousTotalCalls: number;
   apiCount: number;
   trend: number;
-  dailyData: { date: string; calls: number }[];
-  weeklyData: { week: string; calls: number }[];
+  dailyData: { date: string; calls: number; previousCalls: number }[];
+  weeklyData: { week: string; calls: number; previousCalls: number }[];
   monthlyData: { month: string; calls: number; previousYear: number }[];
 }
 
@@ -248,8 +255,8 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
     totalCalls: number;
     previousCalls: number;
     apiCount: number;
-    dailyData: Map<string, number>;
-    weeklyData: Map<string, number>;
+    dailyData: Map<string, { calls: number; previousCalls: number }>;
+    weeklyData: Map<string, { calls: number; previousCalls: number }>;
     monthlyData: Map<string, { calls: number; previousYear: number }>;
   }>();
 
@@ -268,11 +275,13 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
     existing.apiCount += 1;
 
     api.dailyData.forEach(d => {
-      existing.dailyData.set(d.date, (existing.dailyData.get(d.date) || 0) + d.calls);
+      const prev = existing.dailyData.get(d.date) || { calls: 0, previousCalls: 0 };
+      existing.dailyData.set(d.date, { calls: prev.calls + d.calls, previousCalls: prev.previousCalls + d.previousCalls });
     });
 
     api.weeklyData.forEach(d => {
-      existing.weeklyData.set(d.week, (existing.weeklyData.get(d.week) || 0) + d.calls);
+      const prev = existing.weeklyData.get(d.week) || { calls: 0, previousCalls: 0 };
+      existing.weeklyData.set(d.week, { calls: prev.calls + d.calls, previousCalls: prev.previousCalls + d.previousCalls });
     });
 
     api.monthlyData.forEach(d => {
@@ -292,14 +301,15 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
     .map(([client, data]) => ({
       client,
       totalCalls: data.totalCalls,
+      previousTotalCalls: data.previousCalls,
       apiCount: data.apiCount,
       trend: ((data.totalCalls - data.previousCalls) / data.previousCalls) * 100,
       dailyData: Array.from(data.dailyData.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([date, calls]) => ({ date, calls })),
+        .map(([date, d]) => ({ date, calls: d.calls, previousCalls: d.previousCalls })),
       weeklyData: Array.from(data.weeklyData.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([week, calls]) => ({ week, calls })),
+        .map(([week, d]) => ({ week, calls: d.calls, previousCalls: d.previousCalls })),
       monthlyData: months.map(month => {
         const d = data.monthlyData.get(month) || { calls: 0, previousYear: 0 };
         return { month, calls: d.calls, previousYear: d.previousYear };

@@ -16,8 +16,8 @@ import { cn } from '@/lib/utils';
 export type UsageSource = 'overall' | 'internal' | 'external';
 
 interface UsageChartProps {
-  dailyData: { date: string; calls: number }[];
-  weeklyData: { week: string; calls: number }[];
+  dailyData: { date: string; calls: number; previousCalls: number }[];
+  weeklyData: { week: string; calls: number; previousCalls: number }[];
   monthlyData: { month: string; calls: number; previousYear: number }[];
   title?: string;
   usageSource?: UsageSource;
@@ -56,9 +56,11 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
     return rawData.map((item: any) => {
       const { internal, external } = splitCalls(item.calls, item[key]);
       const filtered = { ...item, calls: usageSource === 'internal' ? internal : external };
-      if (item.previousYear !== undefined) {
-        const prev = splitCalls(item.previousYear, item[key] + '_prev');
-        filtered.previousYear = usageSource === 'internal' ? prev.internal : prev.external;
+      // Handle previous data
+      const prevKey = timeRange === 'monthly' ? 'previousYear' : 'previousCalls';
+      if (item[prevKey] !== undefined) {
+        const prev = splitCalls(item[prevKey], item[key] + '_prev');
+        filtered[prevKey] = usageSource === 'internal' ? prev.internal : prev.external;
       }
       return filtered;
     });
@@ -86,6 +88,8 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
 
   const data = getData();
   const xKey = timeRange === 'daily' ? 'date' : timeRange === 'weekly' ? 'week' : 'month';
+  const prevKey = timeRange === 'monthly' ? 'previousYear' : 'previousCalls';
+  const prevLabel = timeRange === 'monthly' ? 'Previous Year' : 'Previous Period';
 
   return (
     <div className="glass-card p-5 animate-fade-in">
@@ -139,7 +143,7 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
                   <stop offset="95%" stopColor="hsl(217, 91%, 50%)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorPrevious" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(215, 16%, 47%)" stopOpacity={0.3} />
+                  <stop offset="5%" stopColor="hsl(215, 16%, 47%)" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="hsl(215, 16%, 47%)" stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -160,17 +164,16 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
                 tickFormatter={formatYAxis}
               />
               <Tooltip content={<CustomTooltip />} />
-              {timeRange === 'monthly' && (
-                <Area
-                  type="monotone"
-                  dataKey="previousYear"
-                  name="Previous Year"
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorPrevious)"
-                />
-              )}
+              <Area
+                type="monotone"
+                dataKey={prevKey}
+                name={prevLabel}
+                stroke="hsl(var(--muted-foreground))"
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+                fillOpacity={1}
+                fill="url(#colorPrevious)"
+              />
               <Area
                 type="monotone"
                 dataKey="calls"
@@ -180,10 +183,10 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
                 fillOpacity={1}
                 fill="url(#colorCalls)"
               />
-              {timeRange === 'monthly' && <Legend />}
+              <Legend />
             </AreaChart>
           ) : (
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barGap={2}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey={xKey}
@@ -200,21 +203,19 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
                 tickFormatter={formatYAxis}
               />
               <Tooltip content={<CustomTooltip />} />
-              {timeRange === 'monthly' && (
-                <Bar
-                  dataKey="previousYear"
-                  name="Previous Year"
-                  fill="hsl(var(--muted-foreground))"
-                  radius={[4, 4, 0, 0]}
-                />
-              )}
+              <Bar
+                dataKey={prevKey}
+                name={prevLabel}
+                fill="hsl(var(--muted-foreground)/0.3)"
+                radius={[4, 4, 0, 0]}
+              />
               <Bar
                 dataKey="calls"
                 name="Current"
                 fill="hsl(var(--primary))"
                 radius={[4, 4, 0, 0]}
               />
-              {timeRange === 'monthly' && <Legend />}
+              <Legend />
             </BarChart>
           )}
         </ResponsiveContainer>

@@ -57,27 +57,33 @@ const Index = () => {
   const filteredStats = useMemo(() => getAggregatedStats(filteredAPIs), [filteredAPIs]);
 
   const aggregatedDailyData = useMemo(() => {
-    const dataMap = new Map<string, number>();
+    const dataMap = new Map<string, { calls: number; previousCalls: number }>();
     filteredAPIs.forEach(api => {
       api.dailyData.forEach(d => {
-        dataMap.set(d.date, (dataMap.get(d.date) || 0) + d.calls);
+        const existing = dataMap.get(d.date) || { calls: 0, previousCalls: 0 };
+        existing.calls += d.calls;
+        existing.previousCalls += d.previousCalls;
+        dataMap.set(d.date, existing);
       });
     });
     return Array.from(dataMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, calls]) => ({ date, calls }));
+      .map(([date, d]) => ({ date, calls: d.calls, previousCalls: d.previousCalls }));
   }, [filteredAPIs]);
 
   const aggregatedWeeklyData = useMemo(() => {
-    const dataMap = new Map<string, number>();
+    const dataMap = new Map<string, { calls: number; previousCalls: number }>();
     filteredAPIs.forEach(api => {
       api.weeklyData.forEach(d => {
-        dataMap.set(d.week, (dataMap.get(d.week) || 0) + d.calls);
+        const existing = dataMap.get(d.week) || { calls: 0, previousCalls: 0 };
+        existing.calls += d.calls;
+        existing.previousCalls += d.previousCalls;
+        dataMap.set(d.week, existing);
       });
     });
     return Array.from(dataMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([week, calls]) => ({ week, calls }));
+      .map(([week, d]) => ({ week, calls: d.calls, previousCalls: d.previousCalls }));
   }, [filteredAPIs]);
 
   const aggregatedMonthlyData = useMemo(() => {
@@ -208,6 +214,7 @@ const Index = () => {
             <MetricCard
               title="Total API Calls"
               value={formatNumber(filteredStats.totalCalls)}
+              previousValue={formatNumber(filteredStats.previousTotalCalls)}
               change={filteredStats.totalChange}
               subtitle="Last 24 hours"
               icon={<Zap className="w-5 h-5" />}
