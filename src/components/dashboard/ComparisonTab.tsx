@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, X, BarChart3, Users, Code2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Calendar as CalendarIcon, X, BarChart3, Users, Code2, TrendingUp, TrendingDown, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { APIData } from '@/lib/mockData';
 import { getClientUsageData } from '@/lib/mockData';
@@ -215,30 +216,55 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
       </div>
 
       {/* Selection chips */}
-      <Card className="glass-card">
-        <CardContent className="p-4">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-            Select {mode === 'clients' ? 'Clients' : 'APIs'} to Compare
-          </p>
-          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-            {items.map(item => (
-              <button
-                key={item}
-                onClick={() => toggle(item)}
-                className={cn(
-                  'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
-                  selected.includes(item)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card text-foreground border-border hover:border-primary/40 hover:bg-muted'
-                )}
-              >
+      <div className="flex flex-wrap items-center gap-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="min-w-[220px] justify-between text-sm h-9">
+              <span className="truncate">
+                {selected.length === 0
+                  ? `Select ${mode === 'clients' ? 'clients' : 'APIs'}…`
+                  : `${selected.length} selected`}
+              </span>
+              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[280px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder={`Search ${mode === 'clients' ? 'clients' : 'APIs'}…`} />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                  {items.map(item => (
+                    <CommandItem
+                      key={item}
+                      value={item}
+                      onSelect={() => toggle(item)}
+                      className="cursor-pointer"
+                    >
+                      <Check className={cn('mr-2 h-3.5 w-3.5', selected.includes(item) ? 'opacity-100' : 'opacity-0')} />
+                      {item}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        {/* Selected badges */}
+        {selected.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {selected.map(item => (
+              <Badge key={item} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
                 {item}
-                {selected.includes(item) && <X className="w-3 h-3 ml-0.5" />}
-              </button>
+                <button onClick={() => toggle(item)} className="ml-0.5 hover:text-destructive transition-colors">
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Chart + summary cards — always visible */}
       <div className="space-y-5">
