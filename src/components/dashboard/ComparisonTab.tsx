@@ -3,11 +3,12 @@ import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
-import { Calendar as CalendarIcon, X, BarChart3, Users, Code2, TrendingUp, TrendingDown, ChevronsUpDown, Check, ArrowLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, X, BarChart3, Users, Code2, TrendingUp, TrendingDown, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { APIData } from '@/lib/mockData';
 import { getClientUsageData } from '@/lib/mockData';
@@ -41,6 +42,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function ComparisonTab({ apis }: ComparisonTabProps) {
+  const isMobile = useIsMobile();
   const [mode, setMode] = useState<CompareMode>('clients');
   const [datePreset, setDatePreset] = useState<DatePreset>('current-vs-previous');
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
@@ -158,56 +160,27 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
       relevantAPIs = apis.filter(a => a.name === detailItem.name);
     }
 
-    // Aggregate status breakdown
+    // Aggregate status breakdown for current AND previous
     const breakdown = { success: 0, sourceDown: 0, notFound: 0, otherError: 0 };
+    const prevBreakdown = { success: 0, sourceDown: 0, notFound: 0, otherError: 0 };
     relevantAPIs.forEach(api => {
       breakdown.success += api.statusBreakdown.success;
       breakdown.sourceDown += api.statusBreakdown.sourceDown;
       breakdown.notFound += api.statusBreakdown.notFound;
       breakdown.otherError += api.statusBreakdown.otherError;
-    });
 
-    // Aggregate status timeline with previous period
-    const timelineMap = new Map<string, { success: number; sourceDown: number; notFound: number; otherError: number }>();
-    const prevTimelineMap = new Map<string, { success: number; sourceDown: number; notFound: number; otherError: number }>();
-    relevantAPIs.forEach(api => {
-      api.statusTimeline.forEach(day => {
-        const existing = timelineMap.get(day.date) || { success: 0, sourceDown: 0, notFound: 0, otherError: 0 };
-        existing.success += day.success;
-        existing.sourceDown += day.sourceDown;
-        existing.notFound += day.notFound;
-        existing.otherError += day.otherError;
-        timelineMap.set(day.date, existing);
-
-        // Generate previous period data (offset ~15-25%)
-        const prev = prevTimelineMap.get(day.date) || { success: 0, sourceDown: 0, notFound: 0, otherError: 0 };
-        const factor = 0.75 + (day.date.charCodeAt(day.date.length - 1) % 10) / 40;
-        prev.success += Math.round(day.success * factor);
-        prev.sourceDown += Math.round(day.sourceDown * factor * 1.2);
-        prev.notFound += Math.round(day.notFound * factor * 1.1);
-        prev.otherError += Math.round(day.otherError * factor * 1.15);
-        prevTimelineMap.set(day.date, prev);
-      });
+      // Generate previous period breakdown (offset)
+      const factor = 0.75 + (api.id.charCodeAt(0) % 10) / 40;
+      prevBreakdown.success += Math.round(api.statusBreakdown.success * factor);
+      prevBreakdown.sourceDown += Math.round(api.statusBreakdown.sourceDown * factor * 1.2);
+      prevBreakdown.notFound += Math.round(api.statusBreakdown.notFound * factor * 1.1);
+      prevBreakdown.otherError += Math.round(api.statusBreakdown.otherError * factor * 1.15);
     });
-    const timeline = Array.from(timelineMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, d]) => {
-        const prev = prevTimelineMap.get(date)!;
-        return {
-          date,
-          ...d,
-          total: d.success + d.sourceDown + d.notFound + d.otherError,
-          prevSuccess: prev.success,
-          prevSourceDown: prev.sourceDown,
-          prevNotFound: prev.notFound,
-          prevOtherError: prev.otherError,
-          prevTotal: prev.success + prev.sourceDown + prev.notFound + prev.otherError,
-        };
-      });
 
     const total = breakdown.success + breakdown.sourceDown + breakdown.notFound + breakdown.otherError;
+    const prevTotal = prevBreakdown.success + prevBreakdown.sourceDown + prevBreakdown.notFound + prevBreakdown.otherError;
 
-    return { breakdown, timeline, total, apis: relevantAPIs };
+    return { breakdown, prevBreakdown, total, prevTotal, apis: relevantAPIs };
   }, [detailItem, mode, apis]);
 
   const handleBarClick = (data: any) => {
@@ -217,189 +190,187 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
     }
   };
 
-  // ---- Detail View ----
-  if (detailItem && detailBreakdown) {
-    const { breakdown, timeline, total } = detailBreakdown;
-    const categories = [
-      { key: 'success', label: 'Success', color: STATUS_COLORS.success },
-      { key: 'sourceDown', label: 'Source Down', color: STATUS_COLORS.sourceDown },
-      { key: 'notFound', label: 'Not Found', color: STATUS_COLORS.notFound },
-      { key: 'otherError', label: 'Other Errors', color: STATUS_COLORS.otherError },
-    ] as const;
+  // ---- Side Drawer for detail ----
+  const renderDetailDrawer = () => {
+    if (!detailItem || !detailBreakdown) return null;
 
-    const breakdownItems = categories.map(cat => ({
+    const { breakdown, prevBreakdown, total, prevTotal } = detailBreakdown;
+    const categories = [
+      { key: 'success' as const, label: 'Success', color: STATUS_COLORS.success },
+      { key: 'sourceDown' as const, label: 'Source Down', color: STATUS_COLORS.sourceDown },
+      { key: 'notFound' as const, label: 'Not Found', color: STATUS_COLORS.notFound },
+      { key: 'otherError' as const, label: 'Other Errors', color: STATUS_COLORS.otherError },
+    ];
+
+    const currentItems = categories.map(cat => ({
       ...cat,
       value: breakdown[cat.key],
       percent: total > 0 ? ((breakdown[cat.key] / total) * 100).toFixed(1) : '0',
     }));
 
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setDetailItem(null)} className="gap-1.5">
-            <ArrowLeft className="w-4 h-4" /> Back to Comparison
+    const prevItems = categories.map(cat => ({
+      ...cat,
+      value: prevBreakdown[cat.key],
+      percent: prevTotal > 0 ? ((prevBreakdown[cat.key] / prevTotal) * 100).toFixed(1) : '0',
+    }));
+
+    const successRate = total > 0 ? (breakdown.success / total * 100) : 0;
+    const prevSuccessRate = prevTotal > 0 ? (prevBreakdown.success / prevTotal * 100) : 0;
+    const failureRate = 100 - successRate;
+    const prevFailureRate = 100 - prevSuccessRate;
+
+    const content = (
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <div>
+            <h2 className="text-lg font-bold truncate">{detailItem.name}</h2>
+            <p className="text-sm text-muted-foreground">Current vs Previous Comparison</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setDetailItem(null)}>
+            <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Left: Volume comparison */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{detailItem.name}</CardTitle>
-              <CardDescription className="text-xs">Current vs Previous Month Volume</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Current</p>
-                  <p className="text-2xl font-bold text-primary">{formatNumber(detailItem.current)}</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Previous</p>
-                  <p className="text-2xl font-bold text-muted-foreground">{formatNumber(detailItem.previous)}</p>
-                </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Volume comparison */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Volume</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Current</p>
+                <p className="text-2xl font-bold text-primary">{formatNumber(detailItem.current)}</p>
               </div>
-              <div className={cn(
-                'flex items-center justify-center gap-1.5 text-sm font-medium',
-                detailItem.change >= 0 ? 'text-success' : 'text-destructive'
-              )}>
-                {detailItem.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                {detailItem.change >= 0 ? '+' : ''}{detailItem.change.toFixed(1)}% change
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right: Status breakdown */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Status Breakdown</CardTitle>
-              <CardDescription className="text-xs">Success vs Failure distribution</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Stacked bar */}
-              <div className="h-3 rounded-full overflow-hidden flex mb-4">
-                {breakdownItems.map(item => (
-                  <div
-                    key={item.key}
-                    style={{ width: `${item.percent}%`, backgroundColor: item.color }}
-                    className="h-full transition-all"
-                  />
-                ))}
-              </div>
-
-              {/* Legend grid */}
-              <div className="grid grid-cols-2 gap-2">
-                {breakdownItems.map(item => (
-                  <div key={item.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs text-muted-foreground">{item.label}</span>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">{formatNumber(item.value)}</span>
-                        <span className="text-xs text-muted-foreground">{item.percent}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Status Trends - Stacked Bar Chart with Current vs Previous */}
-        <Card className="glass-card">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base">Status Trends</CardTitle>
-                <CardDescription className="text-xs">Daily status breakdown — current (solid) vs previous period (semi-transparent)</CardDescription>
-              </div>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-primary inline-block" />
-                  Current
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-muted-foreground/40 inline-block" />
-                  Previous
-                </span>
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Previous</p>
+                <p className="text-2xl font-bold text-muted-foreground">{formatNumber(detailItem.previous)}</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80 overflow-x-auto">
-              <div className="min-w-[700px] h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={timeline} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barGap={1} barCategoryGap="15%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(v) => {
-                        const d = new Date(v);
-                        return `${d.getDate()}/${d.getMonth() + 1}`;
-                      }}
-                    />
-                    <YAxis
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={formatNumber}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                      }}
-                      formatter={(value: number, name: string) => {
-                        const labelMap: Record<string, string> = {
-                          success: 'Success (Current)',
-                          sourceDown: 'Source Down (Current)',
-                          notFound: 'Not Found (Current)',
-                          otherError: 'Other Errors (Current)',
-                          prevSuccess: 'Success (Previous)',
-                          prevSourceDown: 'Source Down (Previous)',
-                          prevNotFound: 'Not Found (Previous)',
-                          prevOtherError: 'Other Errors (Previous)',
-                        };
-                        return [value.toLocaleString(), labelMap[name] || name];
-                      }}
-                    />
-                    {/* Previous period - stacked (semi-transparent) */}
-                    <Bar dataKey="prevSuccess" stackId="prev" fill={STATUS_COLORS.success} fillOpacity={0.25} name="prevSuccess" />
-                    <Bar dataKey="prevSourceDown" stackId="prev" fill={STATUS_COLORS.sourceDown} fillOpacity={0.25} name="prevSourceDown" />
-                    <Bar dataKey="prevNotFound" stackId="prev" fill={STATUS_COLORS.notFound} fillOpacity={0.25} name="prevNotFound" />
-                    <Bar dataKey="prevOtherError" stackId="prev" fill={STATUS_COLORS.otherError} fillOpacity={0.25} radius={[2, 2, 0, 0]} name="prevOtherError" />
-                    {/* Current period - stacked (solid) */}
-                    <Bar dataKey="success" stackId="current" fill={STATUS_COLORS.success} name="success" />
-                    <Bar dataKey="sourceDown" stackId="current" fill={STATUS_COLORS.sourceDown} name="sourceDown" />
-                    <Bar dataKey="notFound" stackId="current" fill={STATUS_COLORS.notFound} name="notFound" />
-                    <Bar dataKey="otherError" stackId="current" fill={STATUS_COLORS.otherError} radius={[2, 2, 0, 0]} name="otherError" />
-                  </BarChart>
-                </ResponsiveContainer>
+            <div className={cn(
+              'flex items-center justify-center gap-1.5 text-sm font-medium mt-2',
+              detailItem.change >= 0 ? 'text-success' : 'text-destructive'
+            )}>
+              {detailItem.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              {detailItem.change >= 0 ? '+' : ''}{detailItem.change.toFixed(1)}% change
+            </div>
+          </div>
+
+          {/* Success / Failure rates comparison */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Rates</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Success Rate</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-success">{successRate.toFixed(1)}%</span>
+                  <span className="text-xs text-muted-foreground">prev: {prevSuccessRate.toFixed(1)}%</span>
+                </div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Failure Rate</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-destructive">{failureRate.toFixed(1)}%</span>
+                  <span className="text-xs text-muted-foreground">prev: {prevFailureRate.toFixed(1)}%</span>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Inline legend */}
-            <div className="flex flex-wrap gap-3 mt-3 justify-center">
-              {categories.map(cat => (
-                <span key={cat.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
-                  {cat.label}
-                </span>
+          {/* Current Period Breakdown */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Current Period Breakdown</h3>
+            <div className="h-3 rounded-full overflow-hidden flex mb-3">
+              {currentItems.map(item => (
+                <div key={item.key} style={{ width: `${item.percent}%`, backgroundColor: item.color }} className="h-full transition-all" />
               ))}
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-1.5">
+              {currentItems.map(item => (
+                <div key={item.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-sm flex-1">{item.label}</span>
+                  <span className="text-sm font-semibold">{formatNumber(item.value)}</span>
+                  <span className="text-xs text-muted-foreground w-12 text-right">{item.percent}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Previous Period Breakdown */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Previous Period Breakdown</h3>
+            <div className="h-3 rounded-full overflow-hidden flex mb-3 opacity-60">
+              {prevItems.map(item => (
+                <div key={item.key} style={{ width: `${item.percent}%`, backgroundColor: item.color }} className="h-full transition-all" />
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              {prevItems.map(item => (
+                <div key={item.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 opacity-60" style={{ backgroundColor: item.color }} />
+                  <span className="text-sm flex-1 text-muted-foreground">{item.label}</span>
+                  <span className="text-sm font-semibold text-muted-foreground">{formatNumber(item.value)}</span>
+                  <span className="text-xs text-muted-foreground w-12 text-right">{item.percent}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Side-by-side comparison bar chart */}
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Status Comparison</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={categories.map(cat => ({
+                    name: cat.label,
+                    current: breakdown[cat.key],
+                    previous: prevBreakdown[cat.key],
+                  }))}
+                  margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  barGap={2}
+                  barCategoryGap="25%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="name" fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={formatNumber} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    }}
+                    formatter={(value: number, name: string) => [value.toLocaleString(), name === 'previous' ? 'Previous' : 'Current']}
+                  />
+                  <Bar dataKey="current" name="Current" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="previous" name="Previous" fill="hsl(var(--muted-foreground)/0.35)" radius={[3, 3, 0, 0]} />
+                  <Legend />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
       </div>
     );
-  }
+
+    if (isMobile) {
+      return (
+        <div className="fixed inset-0 z-50 bg-background animate-fade-in">
+          {content}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setDetailItem(null)} />
+        <div className="fixed right-0 top-0 bottom-0 z-50 w-[520px] max-w-[90vw] bg-background border-l border-border shadow-2xl animate-slide-in-right">
+          {content}
+        </div>
+      </>
+    );
+  };
 
   // ---- Main Comparison View ----
   return (
@@ -676,6 +647,7 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
           })}
         </div>
       </div>
+      {renderDetailDrawer()}
     </div>
   );
 }
