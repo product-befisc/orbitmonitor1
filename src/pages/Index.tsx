@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Activity, Zap, AlertTriangle, Server } from 'lucide-react';
+import { Activity, Zap, AlertTriangle, Server, DollarSign } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { UsageChart, type UsageSource } from '@/components/dashboard/UsageChart';
 import { ClientList } from '@/components/dashboard/ClientList';
@@ -7,6 +7,7 @@ import { ClientDetailView } from '@/components/dashboard/ClientDetailView';
 import { APIRankingList } from '@/components/dashboard/APIRankingList';
 import { APIDetailPanel } from '@/components/dashboard/APIDetailPanel';
 import { AlertDetailView } from '@/components/dashboard/AlertDetailView';
+import { RevenueDetailView } from '@/components/dashboard/RevenueDetailView';
 import { DashboardHeader, type Environment, type DateRange } from '@/components/dashboard/DashboardHeader';
 import { APIConsumptionChart, type StatusDayData } from '@/components/dashboard/APIConsumptionChart';
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
@@ -20,8 +21,11 @@ import { toast } from '@/hooks/use-toast';
 type DashboardView =
   | { type: 'overview' }
   | { type: 'client-detail'; clientName: string }
-  | { type: 'api-detail'; apiId: string; fromClient?: string; fromAlert?: 'warning' | 'critical' }
-  | { type: 'alert-detail'; alertType: 'warning' | 'critical' };
+  | { type: 'api-detail'; apiId: string; fromClient?: string; fromAlert?: boolean }
+  | { type: 'alert-detail' }
+  | { type: 'revenue-detail' };
+
+const RATE_PER_CALL = 0.012;
 
 const Index = () => {
   const [view, setView] = useState<DashboardView>({ type: 'overview' });
@@ -35,14 +39,12 @@ const Index = () => {
   const stats = useMemo(() => getAggregatedStats(mockAPIs), []);
   const sortedAPIs = useMemo(() => [...mockAPIs].sort((a, b) => b.currentCalls - a.currentCalls), []);
 
-  // Search suggestions
   const searchSuggestions = useMemo(() => {
     const names = mockAPIs.map(a => a.name);
     const clients = [...new Set(mockAPIs.map(a => a.client))];
     return [...clients, ...names];
   }, []);
 
-  // Filter APIs by search
   const filteredAPIs = useMemo(() => {
     if (!searchQuery) return mockAPIs;
     const q = searchQuery.toLowerCase();
@@ -55,6 +57,11 @@ const Index = () => {
     [...filteredAPIs].sort((a, b) => b.currentCalls - a.currentCalls), [filteredAPIs]);
   const filteredClientData = useMemo(() => getClientUsageData(filteredAPIs), [filteredAPIs]);
   const filteredStats = useMemo(() => getAggregatedStats(filteredAPIs), [filteredAPIs]);
+
+  // Revenue loss calculation
+  const revenueLoss = useMemo(() => {
+    return filteredAPIs.reduce((sum, api) => sum + api.statusBreakdown.sourceDown * RATE_PER_CALL, 0);
+  }, [filteredAPIs]);
 
   const aggregatedDailyData = useMemo(() => {
     const dataMap = new Map<string, { calls: number; previousCalls: number }>();
@@ -108,6 +115,8 @@ const Index = () => {
     return num.toString();
   };
 
+  const formatCurrency = (val: number) => `$${val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toFixed(2)}`;
+
   const handleDownloadReport = () => {
     generateDailyReport(mockAPIs);
     toast({ title: 'Report downloaded', description: 'Daily summary report has been saved.' });
@@ -122,7 +131,6 @@ const Index = () => {
     toast({ title: `Switched to ${env}`, description: `Dashboard now showing ${env} data.` });
   };
 
-  // Sub-views with header
   const renderWithHeader = (content: React.ReactNode) => (
     <div className="min-h-screen bg-background">
       <DashboardHeader
@@ -144,14 +152,23 @@ const Index = () => {
     </div>
   );
 
-  // Alert detail view
+  // Alert detail view (unified)
   if (view.type === 'alert-detail') {
     return renderWithHeader(
       <AlertDetailView
-        alertType={view.alertType}
         apis={mockAPIs}
         onBack={() => setView({ type: 'overview' })}
-        onSelectAPI={(apiId) => setView({ type: 'api-detail', apiId, fromAlert: view.alertType })}
+        onSelectAPI={(apiId) => setView({ type: 'api-detail', apiId, fromAlert: true })}
+      />
+    );
+  }
+
+  // Revenue detail view
+  if (view.type === 'revenue-detail') {
+    return renderWithHeader(
+      <RevenueDetailView
+        apis={mockAPIs}
+        onBack={() => setView({ type: 'overview' })}
       />
     );
   }
@@ -182,7 +199,7 @@ const Index = () => {
         api={api}
         onBack={() => {
           if (view.fromAlert) {
-            setView({ type: 'alert-detail', alertType: view.fromAlert });
+            setView({ type: 'alert-detail' });
           } else if (view.fromClient) {
             setView({ type: 'client-detail', clientName: view.fromClient });
           } else {
@@ -194,6 +211,8 @@ const Index = () => {
   }
 
   // Overview
+  const alertCount = filteredStats.warningCount + filteredStats.criticalCount;
+
   return renderWithHeader(
     <div className="p-4 md:p-6 space-y-6">
       <Tabs defaultValue="overview" className="w-full">
@@ -204,13 +223,12 @@ const Index = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
-          {/* Subtitle - desktop only */}
           <p className="text-sm text-muted-foreground hidden md:block">
             Monitoring {filteredAPIs.length} APIs across {filteredClientData.length} clients
           </p>
 
-          {/* Metric Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {/* Metric Cards - 5 cards now */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
             <MetricCard
               title="Total API Calls"
               value={formatNumber(filteredStats.totalCalls)}
@@ -227,31 +245,38 @@ const Index = () => {
               status="healthy"
             />
             <MetricCard
-              title="Warnings"
-              value={filteredStats.warningCount}
-              subtitle="Threshold breaches"
+              title="Alerts"
+              value={alertCount}
+              subtitle={`${filteredStats.criticalCount} critical · ${filteredStats.warningCount} warning`}
               icon={<AlertTriangle className="w-5 h-5" />}
-              status={filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
-              onClick={filteredStats.warningCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'warning' }) : undefined}
+              status={filteredStats.criticalCount > 0 ? 'critical' : filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
+              onClick={alertCount > 0 ? () => setView({ type: 'alert-detail' }) : undefined}
             />
             <MetricCard
-              title="Critical Alerts"
-              value={filteredStats.criticalCount}
-              subtitle="Requires attention"
+              title="Revenue Loss"
+              value={formatCurrency(revenueLoss)}
+              subtitle="Source-down impact"
+              icon={<DollarSign className="w-5 h-5" />}
+              status={revenueLoss > 500 ? 'critical' : revenueLoss > 100 ? 'warning' : 'neutral'}
+              onClick={() => setView({ type: 'revenue-detail' })}
+            />
+            <MetricCard
+              title="Success Rate"
+              value={`${((filteredAPIs.reduce((s, a) => s + a.statusBreakdown.success, 0) / filteredAPIs.reduce((s, a) => s + a.currentCalls, 0)) * 100).toFixed(1)}%`}
+              subtitle="Overall"
               icon={<Activity className="w-5 h-5" />}
-              status={filteredStats.criticalCount > 0 ? 'critical' : 'neutral'}
-              onClick={filteredStats.criticalCount > 0 ? () => setView({ type: 'alert-detail', alertType: 'critical' }) : undefined}
+              status="healthy"
             />
           </div>
 
-          {/* API Consumption - Stacked Bar Chart */}
+          {/* API Consumption */}
           <APIConsumptionChart
             apis={filteredAPIs}
             usageSource={usageSource}
             onDayClick={(dayData, apis) => setDrillDown({ dayData, apis })}
           />
 
-          {/* Aggregated Usage Chart */}
+          {/* Usage Chart */}
           <UsageChart
             dailyData={aggregatedDailyData}
             weeklyData={aggregatedWeeklyData}
@@ -260,7 +285,7 @@ const Index = () => {
             usageSource={usageSource}
           />
 
-          {/* Two-column: Client Usage | API Usage */}
+          {/* Two-column */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ClientList
               clients={filteredClientData}
@@ -272,7 +297,6 @@ const Index = () => {
             />
           </div>
 
-          {/* Drill-Down Drawer */}
           {drillDown && (
             <DrillDownDrawer
               dayData={drillDown.dayData}
