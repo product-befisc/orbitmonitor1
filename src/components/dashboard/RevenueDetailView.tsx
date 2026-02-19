@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, DollarSign, TrendingDown, ChevronRight, X } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingDown, ChevronRight, X, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { APIData } from '@/lib/mockData';
 import {
@@ -17,7 +17,7 @@ interface RevenueDetailViewProps {
 const RATE_PER_CALL = 0.012; // revenue per API call
 
 export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
-  const [mode, setMode] = useState<'revenue' | 'usage'>('revenue');
+  const [dateRange, setDateRange] = useState<string>('this-month');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   // Calculate source-down revenue loss per API per day
@@ -94,8 +94,8 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
   const formatCurrency = (val: number) => `$${val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toFixed(2)}`;
   const formatCount = (val: number) => val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toString();
 
-  const chartDataKey = mode === 'revenue' ? 'revenueLoss' : 'sourceDown';
-  const chartLabel = mode === 'revenue' ? 'Revenue Loss' : 'Source Down Count';
+  const chartDataKey = 'revenueLoss';
+  const chartLabel = 'Revenue Loss';
 
   return (
     <div className="min-h-screen bg-background p-6 animate-fade-in">
@@ -135,18 +135,23 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
         </div>
       </div>
 
-      {/* Main Chart with toggle */}
+      {/* Main Chart with date range */}
       <div className="glass-card p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-lg">Daily {chartLabel}</h2>
-          <div className="flex items-center gap-2 text-sm">
-            <span className={cn('font-medium', mode === 'usage' ? 'text-foreground' : 'text-muted-foreground')}>Usage</span>
-            <Switch
-              checked={mode === 'revenue'}
-              onCheckedChange={(checked) => setMode(checked ? 'revenue' : 'usage')}
-            />
-            <span className={cn('font-medium', mode === 'revenue' ? 'text-foreground' : 'text-muted-foreground')}>Revenue</span>
-          </div>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[160px]">
+              <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="last-month">Last Month</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="3-months">Last 3 Months</SelectItem>
+              <SelectItem value="6-months">Last 6 Months</SelectItem>
+              <SelectItem value="1-year">Last 1 Year</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <p className="text-xs text-muted-foreground mb-3">Click on any bar to see API-wise breakdown</p>
         <div className="h-[300px]">
@@ -162,7 +167,7 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
               />
               <YAxis
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                tickFormatter={(v) => mode === 'revenue' ? `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v}` : formatCount(v)}
+                tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v}`}
               />
               <Tooltip
                 contentStyle={{
@@ -172,10 +177,7 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
                   fontSize: 12,
                 }}
                 labelFormatter={(d) => new Date(d as string).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
-                formatter={(value: number) => [
-                  mode === 'revenue' ? formatCurrency(value) : formatCount(value),
-                  chartLabel
-                ]}
+                formatter={(value: number) => [formatCurrency(value), chartLabel]}
               />
               <Bar dataKey={chartDataKey} radius={[4, 4, 0, 0]} cursor="pointer">
                 {dailyChartData.map((entry) => (
@@ -240,7 +242,7 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
               <XAxis
                 type="number"
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                tickFormatter={(v) => mode === 'revenue' ? `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v}` : formatCount(v)}
+                tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}K` : v}`}
               />
               <YAxis
                 type="category"
@@ -255,13 +257,10 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
                   borderRadius: '8px',
                   fontSize: 12,
                 }}
-                formatter={(value: number) => [
-                  mode === 'revenue' ? formatCurrency(value) : formatCount(value),
-                  chartLabel
-                ]}
+                formatter={(value: number) => [formatCurrency(value), chartLabel]}
               />
               <Bar
-                dataKey={mode === 'revenue' ? 'revenueLoss' : 'sourceDown'}
+                dataKey="revenueLoss"
                 fill="hsl(var(--destructive))"
                 fillOpacity={0.8}
                 radius={[0, 4, 4, 0]}
