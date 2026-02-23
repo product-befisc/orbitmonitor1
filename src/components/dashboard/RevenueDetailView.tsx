@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, DollarSign, TrendingDown, ChevronRight, X, Calendar } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingDown, ChevronDown, ChevronRight, X, Calendar } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -301,51 +302,56 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
               </div>
             )}
 
-            <div className="divide-y divide-border">
+            <div className="p-3 space-y-2">
               {dayClientGroups.map(group => {
                 const clientContribution = totalDayLoss > 0 ? (group.revenueLoss / totalDayLoss) * 100 : 0;
                 return (
-                  <div key={group.client} className="py-2">
-                    {/* Client header */}
-                    <div className="px-4 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-2 h-2 rounded-full bg-destructive flex-shrink-0" />
-                        <p className="font-semibold truncate">{group.client}</p>
-                        <Badge variant="secondary" className="text-[10px] flex-shrink-0">{group.apis.length} APIs</Badge>
-                      </div>
-                      <div className="text-right flex-shrink-0 ml-3">
-                        <p className="font-semibold text-destructive">{formatCurrency(group.revenueLoss)}</p>
-                        <p className="text-[10px] text-muted-foreground">{clientContribution.toFixed(1)}% of total</p>
-                      </div>
-                    </div>
-                    {/* Client contribution bar */}
-                    <div className="px-4 pb-2">
-                      <div className="h-1 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-destructive/70 rounded-full transition-all" style={{ width: `${Math.min(clientContribution, 100)}%` }} />
-                      </div>
-                    </div>
-                    {/* APIs under this client */}
-                    <div className="ml-4 border-l-2 border-muted">
-                      {group.apis.map(api => {
-                        const apiContrib = group.revenueLoss > 0 ? (api.revenueLoss / group.revenueLoss) * 100 : 0;
-                        return (
-                          <div key={api.id} className="pl-4 pr-4 py-2.5 flex items-start justify-between hover:bg-muted/30 transition-colors">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-mono text-sm truncate">{api.name}</p>
-                              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <TrendingDown className="w-3 h-3" />
-                                  {formatCount(api.sourceDown)} down
-                                </span>
-                                <span>{apiContrib.toFixed(1)}% of client</span>
-                              </div>
-                            </div>
-                            <span className="font-semibold text-destructive text-sm flex-shrink-0 ml-3">{formatCurrency(api.revenueLoss)}</span>
+                  <Collapsible key={group.client} defaultOpen={dayClientGroups.length <= 3}>
+                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                      <CollapsibleTrigger className="w-full">
+                        <div className="px-4 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors cursor-pointer">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 [[data-state=closed]_&]:-rotate-90 flex-shrink-0" />
+                            <div className="w-2 h-2 rounded-full bg-destructive flex-shrink-0" />
+                            <p className="font-semibold truncate text-left">{group.client}</p>
+                            <Badge variant="secondary" className="text-[10px] flex-shrink-0">{group.apis.length} APIs</Badge>
                           </div>
-                        );
-                      })}
+                          <div className="text-right flex-shrink-0 ml-3">
+                            <p className="font-semibold text-destructive">{formatCurrency(group.revenueLoss)}</p>
+                            <p className="text-[10px] text-muted-foreground">{clientContribution.toFixed(1)}% of total</p>
+                          </div>
+                        </div>
+                        {/* Client contribution bar */}
+                        <div className="px-4 pb-2">
+                          <div className="h-1 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-destructive/70 rounded-full transition-all" style={{ width: `${Math.min(clientContribution, 100)}%` }} />
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="border-t border-border divide-y divide-border/50">
+                          {group.apis.map(api => {
+                            const apiContrib = group.revenueLoss > 0 ? (api.revenueLoss / group.revenueLoss) * 100 : 0;
+                            return (
+                              <div key={api.id} className="px-4 py-2.5 flex items-start justify-between hover:bg-muted/30 transition-colors ml-8">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-mono text-sm truncate">{api.name}</p>
+                                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <TrendingDown className="w-3 h-3" />
+                                      {formatCount(api.sourceDown)} down
+                                    </span>
+                                    <span>{apiContrib.toFixed(1)}% of client</span>
+                                  </div>
+                                </div>
+                                <span className="font-semibold text-destructive text-sm flex-shrink-0 ml-3">{formatCurrency(api.revenueLoss)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CollapsibleContent>
                     </div>
-                  </div>
+                  </Collapsible>
                 );
               })}
 
