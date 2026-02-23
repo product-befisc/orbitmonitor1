@@ -1,6 +1,8 @@
-import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, ChevronRight, Search, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ClientUsageData } from '@/lib/mockData';
+import { Input } from '@/components/ui/input';
 
 interface ClientListProps {
   clients: ClientUsageData[];
@@ -8,6 +10,14 @@ interface ClientListProps {
 }
 
 export function ClientList({ clients, onSelectClient }: ClientListProps) {
+  const [search, setSearch] = useState('');
+
+  const filtered = search
+    ? clients.filter(c => c.client.toLowerCase().includes(search.toLowerCase()))
+    : clients;
+
+  const maxCalls = clients[0]?.totalCalls ?? 1;
+
   const formatCalls = (calls: number) => {
     if (calls >= 1000000) return `${(calls / 1000000).toFixed(1)}M`;
     if (calls >= 1000) return `${(calls / 1000).toFixed(1)}K`;
@@ -15,49 +25,77 @@ export function ClientList({ clients, onSelectClient }: ClientListProps) {
   };
 
   return (
-    <div className="glass-card animate-fade-in">
-      <div className="p-5 border-b border-border">
-        <h3 className="text-lg font-semibold">Client Usage</h3>
-        <p className="text-sm text-muted-foreground">{clients.length} clients ranked by volume</p>
+    <div className="glass-card animate-fade-in flex flex-col">
+      <div className="p-5 border-b border-border flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            Client Usage
+          </h3>
+          <p className="text-sm text-muted-foreground">{clients.length} clients ranked by volume</p>
+        </div>
+        <div className="relative w-40">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Filter…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-8 pl-8 text-xs bg-muted/40 border-border/50"
+          />
+        </div>
       </div>
 
-      <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
-        {clients.map((client, index) => (
-          <div
-            key={client.client}
-            onClick={() => onSelectClient(client.client)}
-            className="p-4 cursor-pointer transition-colors hover:bg-muted/50 flex items-center gap-4"
-          >
-            <div className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
-              index < 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-            )}>
-              {index + 1}
-            </div>
+      <div className="divide-y divide-border/50 max-h-[520px] overflow-y-auto">
+        {filtered.map((client, index) => {
+          const originalIndex = clients.indexOf(client);
+          const volumePercent = (client.totalCalls / maxCalls) * 100;
 
-            <div className="flex-1 min-w-0">
-              <span className="font-medium truncate block">{client.client}</span>
-              <span className="text-xs text-muted-foreground">{client.apiCount} APIs</span>
-            </div>
+          return (
+            <div
+              key={client.client}
+              onClick={() => onSelectClient(client.client)}
+              className="relative p-4 cursor-pointer transition-all duration-200 hover:bg-accent/50 flex items-center gap-4 group"
+            >
+              {/* Volume bar background */}
+              <div
+                className="absolute inset-y-0 left-0 bg-primary/[0.04] transition-all duration-500 pointer-events-none"
+                style={{ width: `${volumePercent}%` }}
+              />
 
-            <div className="text-right flex-shrink-0">
-              <div className="font-semibold">{formatCalls(client.totalCalls)}</div>
-              <div className="text-xs text-muted-foreground">
-                prev: {formatCalls(client.previousTotalCalls)}
+              <div className={cn(
+                'relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-transform group-hover:scale-110',
+                originalIndex < 3 ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground'
+              )}>
+                {originalIndex + 1}
               </div>
-            </div>
 
-            <div className={cn(
-              'flex items-center gap-1 text-xs font-medium flex-shrink-0',
-              client.trend > 0 ? 'text-success' : client.trend < -10 ? 'text-destructive' : client.trend < 0 ? 'text-warning' : 'text-muted-foreground'
-            )}>
-              {client.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              {client.trend > 0 ? '+' : ''}{client.trend.toFixed(1)}%
-            </div>
+              <div className="relative flex-1 min-w-0">
+                <span className="font-medium truncate block group-hover:text-primary transition-colors">{client.client}</span>
+                <span className="text-xs text-muted-foreground">{client.apiCount} APIs</span>
+              </div>
 
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          </div>
-        ))}
+              <div className="relative text-right flex-shrink-0">
+                <div className="font-semibold tabular-nums">{formatCalls(client.totalCalls)}</div>
+                <div className="text-[11px] text-muted-foreground tabular-nums">
+                  prev: {formatCalls(client.previousTotalCalls)}
+                </div>
+              </div>
+
+              <div className={cn(
+                'relative flex items-center gap-1 text-xs font-medium flex-shrink-0 min-w-[60px] justify-end',
+                client.trend > 0 ? 'text-success' : client.trend < -10 ? 'text-destructive' : client.trend < 0 ? 'text-warning' : 'text-muted-foreground'
+              )}>
+                {client.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                <span className="tabular-nums">{client.trend > 0 ? '+' : ''}{client.trend.toFixed(1)}%</span>
+              </div>
+
+              <ChevronRight className="relative w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-sm text-muted-foreground">No clients match "{search}"</div>
+        )}
       </div>
     </div>
   );
