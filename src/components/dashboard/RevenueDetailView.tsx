@@ -64,33 +64,27 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
     return Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
   }, [apiRevenueLoss]);
 
-  // APIs for a selected day
-  const dayAPIs = useMemo(() => {
+  // APIs for a selected day, grouped by client
+  const dayClientGroups = useMemo(() => {
     if (!selectedDay) return [];
-    return apiRevenueLoss
-      .map(({ api, perDayLoss }) => {
-        const dayData = perDayLoss.find(d => d.date === selectedDay);
-        if (!dayData || dayData.sourceDown === 0) return null;
-        return {
-          id: api.id,
-          name: api.name,
-          client: api.client,
-          sourceDown: dayData.sourceDown,
-          revenueLoss: dayData.revenueLoss,
-          contribution: 0,
-        };
-      })
-      .filter(Boolean) as { id: string; name: string; client: string; sourceDown: number; revenueLoss: number; contribution: number }[];
+    const clientMap = new Map<string, { client: string; revenueLoss: number; sourceDown: number; apis: { id: string; name: string; sourceDown: number; revenueLoss: number }[] }>();
+    apiRevenueLoss.forEach(({ api, perDayLoss }) => {
+      const dayData = perDayLoss.find(d => d.date === selectedDay);
+      if (!dayData || dayData.sourceDown === 0) return;
+      const existing = clientMap.get(api.client) || { client: api.client, revenueLoss: 0, sourceDown: 0, apis: [] };
+      existing.revenueLoss += dayData.revenueLoss;
+      existing.sourceDown += dayData.sourceDown;
+      existing.apis.push({ id: api.id, name: api.name, sourceDown: dayData.sourceDown, revenueLoss: dayData.revenueLoss });
+      clientMap.set(api.client, existing);
+    });
+    const groups = Array.from(clientMap.values()).sort((a, b) => b.revenueLoss - a.revenueLoss);
+    // Sort APIs within each group
+    groups.forEach(g => g.apis.sort((a, b) => b.revenueLoss - a.revenueLoss));
+    return groups;
   }, [selectedDay, apiRevenueLoss]);
 
-  // Calculate contribution percentages
-  const dayAPIsWithContribution = useMemo(() => {
-    const totalDayLoss = dayAPIs.reduce((s, a) => s + a.revenueLoss, 0);
-    return dayAPIs
-      .map(a => ({ ...a, contribution: totalDayLoss > 0 ? (a.revenueLoss / totalDayLoss) * 100 : 0 }))
-      .sort((a, b) => b.revenueLoss - a.revenueLoss);
-  }, [dayAPIs]);
-
+  const totalDayLoss = dayClientGroups.reduce((s, g) => s + g.revenueLoss, 0);
+  const totalDayAPIs = dayClientGroups.reduce((s, g) => s + g.apis.length, 0);
   const formatCurrency = (val: number) => `$${val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toFixed(2)}`;
   const formatCount = (val: number) => val >= 1000 ? `${(val / 1000).toFixed(1)}K` : val.toString();
 
@@ -281,7 +275,7 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
                   {new Date(selectedDay).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {dayAPIsWithContribution.length} APIs · Total: {formatCurrency(dayAPIs.reduce((s, a) => s + a.revenueLoss, 0))}
+                  {dayClientGroups.length} clients · {totalDayAPIs} APIs · {formatCurrency(totalDayLoss)}
                 </p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSelectedDay(null)}>
@@ -289,32 +283,73 @@ export function RevenueDetailView({ apis, onBack }: RevenueDetailViewProps) {
               </Button>
             </div>
 
-            <div className="divide-y divide-border">
-              {dayAPIsWithContribution.map(api => (
-                <div key={api.id} className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-mono text-sm font-medium truncate">{api.name}</p>
-                    <span className="font-semibold text-destructive">{formatCurrency(api.revenueLoss)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{api.client}</span>
-                    <span>{formatCount(api.sourceDown)} source down</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-destructive rounded-full transition-all"
-                        style={{ width: `${Math.min(api.contribution, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground w-12 text-right">
-                      {api.contribution.toFixed(1)}%
-                    </span>
-                  </div>
+            {/* Summary row */}
+            {dayClientGroups.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 p-4 border-b border-border bg-muted/30">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Total Loss</p>
+                  <p className="text-lg font-semibold text-destructive">{formatCurrency(totalDayLoss)}</p>
                 </div>
-              ))}
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Source Down</p>
+                  <p className="text-lg font-semibold">{formatCount(dayClientGroups.reduce((s, g) => s + g.sourceDown, 0))}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Clients</p>
+                  <p className="text-lg font-semibold">{dayClientGroups.length}</p>
+                </div>
+              </div>
+            )}
 
-              {dayAPIsWithContribution.length === 0 && (
+            <div className="divide-y divide-border">
+              {dayClientGroups.map(group => {
+                const clientContribution = totalDayLoss > 0 ? (group.revenueLoss / totalDayLoss) * 100 : 0;
+                return (
+                  <div key={group.client} className="py-2">
+                    {/* Client header */}
+                    <div className="px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-2 h-2 rounded-full bg-destructive flex-shrink-0" />
+                        <p className="font-semibold truncate">{group.client}</p>
+                        <Badge variant="secondary" className="text-[10px] flex-shrink-0">{group.apis.length} APIs</Badge>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className="font-semibold text-destructive">{formatCurrency(group.revenueLoss)}</p>
+                        <p className="text-[10px] text-muted-foreground">{clientContribution.toFixed(1)}% of total</p>
+                      </div>
+                    </div>
+                    {/* Client contribution bar */}
+                    <div className="px-4 pb-2">
+                      <div className="h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-destructive/70 rounded-full transition-all" style={{ width: `${Math.min(clientContribution, 100)}%` }} />
+                      </div>
+                    </div>
+                    {/* APIs under this client */}
+                    <div className="ml-4 border-l-2 border-muted">
+                      {group.apis.map(api => {
+                        const apiContrib = group.revenueLoss > 0 ? (api.revenueLoss / group.revenueLoss) * 100 : 0;
+                        return (
+                          <div key={api.id} className="pl-4 pr-4 py-2.5 flex items-start justify-between hover:bg-muted/30 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-mono text-sm truncate">{api.name}</p>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <TrendingDown className="w-3 h-3" />
+                                  {formatCount(api.sourceDown)} down
+                                </span>
+                                <span>{apiContrib.toFixed(1)}% of client</span>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-destructive text-sm flex-shrink-0 ml-3">{formatCurrency(api.revenueLoss)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {dayClientGroups.length === 0 && (
                 <div className="p-12 text-center text-muted-foreground">
                   No source-down events on this day.
                 </div>
