@@ -88,7 +88,25 @@ function getAggregatedPercentileData(apis: APIData[], timeRange: TimeRange, perc
 
 export const PercentileAnalysisTab = ({ apis }: PercentileAnalysisTabProps) => {
   const [selectedAPIs, setSelectedAPIs] = useState<string[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+
+  const uniqueClients = useMemo(() => [...new Set(apis.map(a => a.client))].sort(), [apis]);
+
+  const toggleClient = useCallback((client: string) => {
+    setSelectedClients(prev => {
+      const next = prev.includes(client) ? prev.filter(c => c !== client) : [...prev, client];
+      // Auto-select/deselect APIs for this client
+      const clientApiIds = apis.filter(a => a.client === client).map(a => a.id);
+      if (next.includes(client)) {
+        setSelectedAPIs(prevApis => [...new Set([...prevApis, ...clientApiIds])]);
+      } else {
+        setSelectedAPIs(prevApis => prevApis.filter(id => !clientApiIds.includes(id)));
+      }
+      return next;
+    });
+  }, [apis]);
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const [activePercentiles, setActivePercentiles] = useState<number[]>([...PRESET_PERCENTILES]);
   const [customPercentile, setCustomPercentile] = useState('');
@@ -203,6 +221,38 @@ export const PercentileAnalysisTab = ({ apis }: PercentileAnalysisTabProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4 items-end">
+            {/* Client Selection */}
+            <div className="space-y-1.5 min-w-[200px]">
+              <Label className="text-xs font-medium text-muted-foreground">Clients</Label>
+              <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between text-sm h-9">
+                    {selectedClients.length === 0 ? 'All Clients' : `${selectedClients.length} client(s)`}
+                    <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[240px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search clients..." />
+                    <CommandList>
+                      <CommandEmpty>No client found.</CommandEmpty>
+                      <CommandGroup>
+                        {uniqueClients.map(client => (
+                          <CommandItem key={client} onSelect={() => toggleClient(client)}>
+                            <Check className={cn('w-3.5 h-3.5 mr-2', selectedClients.includes(client) ? 'opacity-100' : 'opacity-0')} />
+                            <span className="truncate">{client}</span>
+                            <Badge variant="outline" className="ml-auto text-[10px]">
+                              {apis.filter(a => a.client === client).length} APIs
+                            </Badge>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* API Selection */}
             <div className="space-y-1.5 min-w-[220px]">
               <Label className="text-xs font-medium text-muted-foreground">APIs</Label>
