@@ -331,6 +331,31 @@ export const PercentileAnalysisTab = ({ apis }: PercentileAnalysisTabProps) => {
             </div>
           </div>
 
+          {/* Selected Clients & APIs Chips */}
+          {(selectedClients.length > 0 || selectedAPIs.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {selectedClients.map(client => (
+                <Badge key={`client-${client}`} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                  {client}
+                  <button onClick={() => toggleClient(client)} className="ml-0.5 hover:text-destructive transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+              {selectedAPIs.map(id => {
+                const api = apis.find(a => a.id === id);
+                return (
+                  <Badge key={`api-${id}`} variant="outline" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
+                    {api?.name ?? id}
+                    <button onClick={() => toggleAPI(id)} className="ml-0.5 hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+
           {/* Toggles row */}
           <div className="flex flex-wrap items-center gap-6 pt-1">
             <div className="flex items-center gap-2">
