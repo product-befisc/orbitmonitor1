@@ -88,7 +88,25 @@ function getAggregatedPercentileData(apis: APIData[], timeRange: TimeRange, perc
 
 export const PercentileAnalysisTab = ({ apis }: PercentileAnalysisTabProps) => {
   const [selectedAPIs, setSelectedAPIs] = useState<string[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+
+  const uniqueClients = useMemo(() => [...new Set(apis.map(a => a.client))].sort(), [apis]);
+
+  const toggleClient = useCallback((client: string) => {
+    setSelectedClients(prev => {
+      const next = prev.includes(client) ? prev.filter(c => c !== client) : [...prev, client];
+      // Auto-select/deselect APIs for this client
+      const clientApiIds = apis.filter(a => a.client === client).map(a => a.id);
+      if (next.includes(client)) {
+        setSelectedAPIs(prevApis => [...new Set([...prevApis, ...clientApiIds])]);
+      } else {
+        setSelectedAPIs(prevApis => prevApis.filter(id => !clientApiIds.includes(id)));
+      }
+      return next;
+    });
+  }, [apis]);
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const [activePercentiles, setActivePercentiles] = useState<number[]>([...PRESET_PERCENTILES]);
   const [customPercentile, setCustomPercentile] = useState('');
