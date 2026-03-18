@@ -322,6 +322,10 @@ const Index = () => {
         <TabsContent value="percentile" className="mt-0">
           <PercentileAnalysisTab apis={filteredAPIs} />
         </TabsContent>
+
+        <TabsContent value="support-tickets" className="mt-0">
+          <SupportTicketsTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
