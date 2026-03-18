@@ -177,11 +177,11 @@ export const SupportTicketsTab = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">From</p>
-              <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+              <Input type="date" value={fromDate} onChange={e => handleFromDate(e.target.value)} />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">To</p>
-              <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
+              <Input type="date" value={toDate} onChange={e => handleToDate(e.target.value)} />
             </div>
           </div>
         </CardContent>
