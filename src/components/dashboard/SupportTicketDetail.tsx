@@ -10,6 +10,25 @@ interface Props {
 }
 
 export const SupportTicketDetail = ({ ticket, onBack }: Props) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    const plainText = ticket.aiSummary.replace(/\*\*/g, '');
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.rate = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
   return (
     <div className="space-y-6">
       <Button variant="ghost" onClick={onBack} className="mb-2">
