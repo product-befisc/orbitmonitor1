@@ -187,6 +187,72 @@ export const SupportTicketsTab = () => {
         </CardContent>
       </Card>
 
+      {/* Tickets Over Time Chart */}
+      <Card>
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-lg text-foreground">Tickets Over Time</h3>
+            <div className="flex items-center bg-muted rounded-full p-1 gap-0.5">
+              {[
+                { value: '3-months', label: 'Last 3 Months' },
+                { value: '6-months', label: 'Last 6 Months' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setChartRange(opt.value)}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+                    chartRange === opt.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              {hasCustomDate && (
+                <button
+                  onClick={() => setChartRange('custom')}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+                    chartRange === 'custom'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Custom ({customDateLabel})
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(d) => format(parseISO(d), 'dd MMM')}
+                />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: 12,
+                  }}
+                  labelFormatter={(d) => `Week of ${format(parseISO(d as string), 'dd MMM yyyy')}`}
+                />
+                <Bar dataKey="open" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 0, 0]} name="Open" />
+                <Bar dataKey="inProgress" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} name="In Progress" />
+                <Bar dataKey="closed" stackId="a" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} name="Closed" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Table */}
       <Card>
         <CardContent className="p-0">
