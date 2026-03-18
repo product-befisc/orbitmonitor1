@@ -19,6 +19,9 @@ export const SupportTicketsTab = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [chartRange, setChartRange] = useState<string>('3-months');
+
+  const hasCustomDate = fromDate !== '' || toDate !== '';
 
   const uniqueClients = useMemo(() => [...new Set(mockTickets.map(t => t.client))], []);
   const uniqueCategories = useMemo(() => [...new Set(mockTickets.map(t => t.category))], []);
