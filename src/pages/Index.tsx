@@ -14,6 +14,7 @@ import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
 import { VendorAPIsTab } from '@/components/dashboard/VendorAPIsTab';
 import { PercentileAnalysisTab } from '@/components/dashboard/PercentileAnalysisTab';
+import { SupportTicketsTab } from '@/components/dashboard/SupportTicketsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
@@ -222,6 +223,7 @@ const Index = () => {
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
           <TabsTrigger value="vendor-apis">Vendor APIs</TabsTrigger>
           <TabsTrigger value="percentile">Percentile Analysis</TabsTrigger>
+          <TabsTrigger value="support-tickets">Support Tickets</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
@@ -319,6 +321,10 @@ const Index = () => {
 
         <TabsContent value="percentile" className="mt-0">
           <PercentileAnalysisTab apis={filteredAPIs} />
+        </TabsContent>
+
+        <TabsContent value="support-tickets" className="mt-0">
+          <SupportTicketsTab />
         </TabsContent>
       </Tabs>
     </div>
