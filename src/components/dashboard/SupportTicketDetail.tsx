@@ -48,7 +48,17 @@ export const SupportTicketDetail = ({ ticket, onBack }: Props) => {
           {/* AI Summary */}
           <Card>
             <CardContent className="p-6">
-              <p className="text-xs font-semibold tracking-widest text-muted-foreground mb-4">AI SUMMARY</p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">AI SUMMARY</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSpeech}
+                  className={isSpeaking ? 'text-primary animate-pulse' : 'text-muted-foreground hover:text-foreground'}
+                >
+                  {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+              </div>
               <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                 {ticket.aiSummary.split('\n').map((line, i) => {
                   if (line.startsWith('**') && line.endsWith('**')) {
