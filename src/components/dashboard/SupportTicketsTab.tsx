@@ -8,9 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Download, Plus } from 'lucide-react';
 import { mockTickets, type SupportTicket } from '@/lib/mockTickets';
 import { SupportTicketDetail } from './SupportTicketDetail';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { cn } from '@/lib/utils';
-import { format, subMonths, subDays, isAfter, isBefore, parseISO } from 'date-fns';
 
 export const SupportTicketsTab = () => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -19,9 +16,6 @@ export const SupportTicketsTab = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [chartRange, setChartRange] = useState<string>('3-months');
-
-  const hasCustomDate = fromDate !== '' || toDate !== '';
 
   const uniqueClients = useMemo(() => [...new Set(mockTickets.map(t => t.client))], []);
   const uniqueCategories = useMemo(() => [...new Set(mockTickets.map(t => t.category))], []);
@@ -43,63 +37,6 @@ export const SupportTicketsTab = () => {
     inProgress: filteredTickets.filter(t => t.status === 'IN_PROGRESS').length,
     closed: filteredTickets.filter(t => t.status === 'CLOSED').length,
   }), [filteredTickets]);
-
-  // Chart data based on chartRange
-  const chartData = useMemo(() => {
-    const now = new Date();
-    let startDate: Date;
-    let endDate: Date = now;
-    let customLabel = '';
-
-    if (chartRange === 'custom' && hasCustomDate) {
-      startDate = fromDate ? parseISO(fromDate) : subMonths(now, 3);
-      endDate = toDate ? parseISO(toDate) : now;
-      customLabel = `${fromDate || '...'} → ${toDate || '...'}`;
-    } else {
-      switch (chartRange) {
-        case '3-months': startDate = subMonths(now, 3); break;
-        case '6-months': startDate = subMonths(now, 6); break;
-        default: startDate = subMonths(now, 3);
-      }
-    }
-
-    // Group tickets by week
-    const weekMap = new Map<string, { week: string; open: number; inProgress: number; closed: number }>();
-    filteredTickets.forEach(t => {
-      const ticketDate = parseISO(t.date);
-      if (isBefore(ticketDate, startDate) || isAfter(ticketDate, endDate)) return;
-      // Get week start (Monday)
-      const day = ticketDate.getDay();
-      const diff = ticketDate.getDate() - day + (day === 0 ? -6 : 1);
-      const weekStart = new Date(ticketDate);
-      weekStart.setDate(diff);
-      const weekKey = format(weekStart, 'yyyy-MM-dd');
-      const existing = weekMap.get(weekKey) || { week: weekKey, open: 0, inProgress: 0, closed: 0 };
-      if (t.status === 'OPEN') existing.open++;
-      else if (t.status === 'IN_PROGRESS') existing.inProgress++;
-      else existing.closed++;
-      weekMap.set(weekKey, existing);
-    });
-
-    return Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
-  }, [chartRange, filteredTickets, fromDate, toDate, hasCustomDate]);
-
-  // Auto-switch to custom when dates are set
-  const handleFromDate = (val: string) => {
-    setFromDate(val);
-    if (val || toDate) setChartRange('custom');
-  };
-  const handleToDate = (val: string) => {
-    setToDate(val);
-    if (val || fromDate) setChartRange('custom');
-  };
-
-  const customDateLabel = useMemo(() => {
-    if (!hasCustomDate) return '';
-    const from = fromDate ? format(parseISO(fromDate), 'dd MMM') : '...';
-    const to = toDate ? format(parseISO(toDate), 'dd MMM') : '...';
-    return `${from} - ${to}`;
-  }, [fromDate, toDate, hasCustomDate]);
 
   if (selectedTicket) {
     return <SupportTicketDetail ticket={selectedTicket} onBack={() => setSelectedTicket(null)} />;
@@ -177,78 +114,12 @@ export const SupportTicketsTab = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">From</p>
-              <Input type="date" value={fromDate} onChange={e => handleFromDate(e.target.value)} />
+              <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">To</p>
-              <Input type="date" value={toDate} onChange={e => handleToDate(e.target.value)} />
+              <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tickets Over Time Chart */}
-      <Card>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg text-foreground">Tickets Over Time</h3>
-            <div className="flex items-center bg-muted rounded-full p-1 gap-0.5">
-              {[
-                { value: '3-months', label: 'Last 3 Months' },
-                { value: '6-months', label: 'Last 6 Months' },
-              ].map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setChartRange(opt.value)}
-                  className={cn(
-                    'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
-                    chartRange === opt.value
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-              {hasCustomDate && (
-                <button
-                  onClick={() => setChartRange('custom')}
-                  className={cn(
-                    'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
-                    chartRange === 'custom'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Custom ({customDateLabel})
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="week"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={(d) => format(parseISO(d), 'dd MMM')}
-                />
-                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: 12,
-                  }}
-                  labelFormatter={(d) => `Week of ${format(parseISO(d as string), 'dd MMM yyyy')}`}
-                />
-                <Bar dataKey="open" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 0, 0]} name="Open" />
-                <Bar dataKey="inProgress" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} name="In Progress" />
-                <Bar dataKey="closed" stackId="a" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} name="Closed" />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
