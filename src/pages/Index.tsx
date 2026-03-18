@@ -223,6 +223,7 @@ const Index = () => {
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
           <TabsTrigger value="vendor-apis">Vendor APIs</TabsTrigger>
           <TabsTrigger value="percentile">Percentile Analysis</TabsTrigger>
+          <TabsTrigger value="support-tickets">Support Tickets</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
