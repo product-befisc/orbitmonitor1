@@ -44,6 +44,63 @@ export const SupportTicketsTab = () => {
     closed: filteredTickets.filter(t => t.status === 'CLOSED').length,
   }), [filteredTickets]);
 
+  // Chart data based on chartRange
+  const chartData = useMemo(() => {
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date = now;
+    let customLabel = '';
+
+    if (chartRange === 'custom' && hasCustomDate) {
+      startDate = fromDate ? parseISO(fromDate) : subMonths(now, 3);
+      endDate = toDate ? parseISO(toDate) : now;
+      customLabel = `${fromDate || '...'} → ${toDate || '...'}`;
+    } else {
+      switch (chartRange) {
+        case '3-months': startDate = subMonths(now, 3); break;
+        case '6-months': startDate = subMonths(now, 6); break;
+        default: startDate = subMonths(now, 3);
+      }
+    }
+
+    // Group tickets by week
+    const weekMap = new Map<string, { week: string; open: number; inProgress: number; closed: number }>();
+    filteredTickets.forEach(t => {
+      const ticketDate = parseISO(t.date);
+      if (isBefore(ticketDate, startDate) || isAfter(ticketDate, endDate)) return;
+      // Get week start (Monday)
+      const day = ticketDate.getDay();
+      const diff = ticketDate.getDate() - day + (day === 0 ? -6 : 1);
+      const weekStart = new Date(ticketDate);
+      weekStart.setDate(diff);
+      const weekKey = format(weekStart, 'yyyy-MM-dd');
+      const existing = weekMap.get(weekKey) || { week: weekKey, open: 0, inProgress: 0, closed: 0 };
+      if (t.status === 'OPEN') existing.open++;
+      else if (t.status === 'IN_PROGRESS') existing.inProgress++;
+      else existing.closed++;
+      weekMap.set(weekKey, existing);
+    });
+
+    return Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
+  }, [chartRange, filteredTickets, fromDate, toDate, hasCustomDate]);
+
+  // Auto-switch to custom when dates are set
+  const handleFromDate = (val: string) => {
+    setFromDate(val);
+    if (val || toDate) setChartRange('custom');
+  };
+  const handleToDate = (val: string) => {
+    setToDate(val);
+    if (val || fromDate) setChartRange('custom');
+  };
+
+  const customDateLabel = useMemo(() => {
+    if (!hasCustomDate) return '';
+    const from = fromDate ? format(parseISO(fromDate), 'dd MMM') : '...';
+    const to = toDate ? format(parseISO(toDate), 'dd MMM') : '...';
+    return `${from} - ${to}`;
+  }, [fromDate, toDate, hasCustomDate]);
+
   if (selectedTicket) {
     return <SupportTicketDetail ticket={selectedTicket} onBack={() => setSelectedTicket(null)} />;
   }
