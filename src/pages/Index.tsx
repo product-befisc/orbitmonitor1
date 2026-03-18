@@ -14,6 +14,7 @@ import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
 import { VendorAPIsTab } from '@/components/dashboard/VendorAPIsTab';
 import { PercentileAnalysisTab } from '@/components/dashboard/PercentileAnalysisTab';
+import { SupportTicketsTab } from '@/components/dashboard/SupportTicketsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
