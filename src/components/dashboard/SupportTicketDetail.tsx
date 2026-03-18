@@ -1,7 +1,8 @@
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import type { SupportTicket } from '@/lib/mockTickets';
 
 interface Props {
@@ -10,6 +11,25 @@ interface Props {
 }
 
 export const SupportTicketDetail = ({ ticket, onBack }: Props) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    const plainText = ticket.aiSummary.replace(/\*\*/g, '');
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.rate = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
   return (
     <div className="space-y-6">
       <Button variant="ghost" onClick={onBack} className="mb-2">
@@ -29,7 +49,17 @@ export const SupportTicketDetail = ({ ticket, onBack }: Props) => {
           {/* AI Summary */}
           <Card>
             <CardContent className="p-6">
-              <p className="text-xs font-semibold tracking-widest text-muted-foreground mb-4">AI SUMMARY</p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">AI SUMMARY</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSpeech}
+                  className={isSpeaking ? 'text-primary animate-pulse' : 'text-muted-foreground hover:text-foreground'}
+                >
+                  {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+              </div>
               <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                 {ticket.aiSummary.split('\n').map((line, i) => {
                   if (line.startsWith('**') && line.endsWith('**')) {
