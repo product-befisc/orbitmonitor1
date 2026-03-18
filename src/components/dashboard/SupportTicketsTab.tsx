@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Download, Plus } from 'lucide-react';
 import { mockTickets, type SupportTicket } from '@/lib/mockTickets';
 import { SupportTicketDetail } from './SupportTicketDetail';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { cn } from '@/lib/utils';
+import { format, subMonths, subDays, isAfter, isBefore, parseISO } from 'date-fns';
 
 export const SupportTicketsTab = () => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
