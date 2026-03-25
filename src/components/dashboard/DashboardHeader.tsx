@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import type { UsageSource } from './UsageChart';
 import { GlobalFilters, type GlobalFilterState, type DateRange } from './GlobalFilters';
 
+export type { DateRange };
 export type Environment = 'staging' | 'production';
 
 interface DashboardHeaderProps {
