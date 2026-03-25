@@ -52,6 +52,11 @@ export function DashboardHeader({
   onLogout,
   apiCount,
   clientCount,
+  globalFilters,
+  onGlobalFiltersChange,
+  filterClients,
+  filterAPIs,
+  filterSalesPersons,
 }: DashboardHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
