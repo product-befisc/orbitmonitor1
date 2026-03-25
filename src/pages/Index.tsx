@@ -161,6 +161,11 @@ const Index = () => {
         onLogout={handleLogout}
         apiCount={mockAPIs.length}
         clientCount={clientData.length}
+        globalFilters={globalFilters}
+        onGlobalFiltersChange={setGlobalFilters}
+        filterClients={allClients}
+        filterAPIs={allAPINames}
+        filterSalesPersons={salesPersons}
       />
       {content}
     </div>
