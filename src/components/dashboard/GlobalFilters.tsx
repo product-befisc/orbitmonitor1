@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 export interface GlobalFilterState {
   client: string;
@@ -13,27 +15,41 @@ export interface GlobalFilterState {
   salesPerson: string;
 }
 
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 interface GlobalFiltersProps {
   filters: GlobalFilterState;
   onFiltersChange: (filters: GlobalFilterState) => void;
   clients: string[];
   apis: string[];
   salesPersons: string[];
+  dateRange: DateRange;
+  onDateRangeChange: (range: DateRange) => void;
 }
 
-export function GlobalFilters({ filters, onFiltersChange, clients, apis, salesPersons }: GlobalFiltersProps) {
+export function GlobalFilters({ filters, onFiltersChange, clients, apis, salesPersons, dateRange, onDateRangeChange }: GlobalFiltersProps) {
   const [open, setOpen] = useState(false);
 
   const activeCount = [filters.client, filters.api, filters.status, filters.salesPerson]
-    .filter(v => v !== 'all').length;
+    .filter(v => v !== 'all').length + (dateRange.from ? 1 : 0);
 
   const handleReset = () => {
     onFiltersChange({ client: 'all', api: 'all', status: 'all', salesPerson: 'all' });
+    onDateRangeChange({ from: undefined, to: undefined });
   };
 
   const update = (key: keyof GlobalFilterState, value: string) => {
     onFiltersChange({ ...filters, [key]: value });
   };
+
+  const dateLabel = dateRange.from
+    ? dateRange.to
+      ? `${format(dateRange.from, 'MMM d')} – ${format(dateRange.to, 'MMM d, yyyy')}`
+      : format(dateRange.from, 'MMM d, yyyy')
+    : 'Select dates';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,7 +64,7 @@ export function GlobalFilters({ filters, onFiltersChange, clients, apis, salesPe
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-4" align="end">
+      <PopoverContent className="w-80 p-4" align="end">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-sm text-foreground">Filters</h3>
           {activeCount > 0 && (
@@ -104,6 +120,27 @@ export function GlobalFilters({ filters, onFiltersChange, clients, apis, salesPe
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">Date Range</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs justify-start h-9">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {dateLabel}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end" side="left">
+                <CalendarComponent
+                  mode="range"
+                  selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
+                  onSelect={(range) => onDateRangeChange({ from: range?.from, to: range?.to })}
+                  numberOfMonths={2}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Active filter chips */}
@@ -133,6 +170,12 @@ export function GlobalFilters({ filters, onFiltersChange, clients, apis, salesPe
                 <Badge variant="secondary" className="text-xs gap-1 pr-1">
                   {filters.salesPerson}
                   <X className="w-3 h-3 cursor-pointer hover:text-foreground" onClick={() => update('salesPerson', 'all')} />
+                </Badge>
+              )}
+              {dateRange.from && (
+                <Badge variant="secondary" className="text-xs gap-1 pr-1">
+                  {dateLabel}
+                  <X className="w-3 h-3 cursor-pointer hover:text-foreground" onClick={() => onDateRangeChange({ from: undefined, to: undefined })} />
                 </Badge>
               )}
             </div>
