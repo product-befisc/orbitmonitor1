@@ -347,6 +347,17 @@ export function DashboardHeader({
               </Popover>
             </div>
 
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Filters</p>
+              <GlobalFilters
+                filters={globalFilters}
+                onFiltersChange={onGlobalFiltersChange}
+                clients={filterClients}
+                apis={filterAPIs}
+                salesPersons={filterSalesPersons}
+              />
+            </div>
+
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={onDownloadReport}>
                 <Download className="w-3.5 h-3.5" />
