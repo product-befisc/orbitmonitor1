@@ -3,33 +3,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Plus } from 'lucide-react';
 import { mockTickets, type SupportTicket } from '@/lib/mockTickets';
 import { SupportTicketDetail } from './SupportTicketDetail';
+import type { GlobalFilterState } from './GlobalFilters';
 
-export const SupportTicketsTab = () => {
+interface SupportTicketsTabProps {
+  globalFilters: GlobalFilterState;
+}
+
+export const SupportTicketsTab = ({ globalFilters }: SupportTicketsTabProps) => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-  const [clientFilter, setClientFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  const uniqueClients = useMemo(() => [...new Set(mockTickets.map(t => t.client))], []);
-  const uniqueCategories = useMemo(() => [...new Set(mockTickets.map(t => t.category))], []);
-
   const filteredTickets = useMemo(() => {
     return mockTickets.filter(t => {
-      if (clientFilter !== 'all' && t.client !== clientFilter) return false;
-      if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (globalFilters.client !== 'all' && t.client !== globalFilters.client) return false;
+      if (globalFilters.status !== 'all') {
+        const statusMap: Record<string, string> = { healthy: 'CLOSED', warning: 'IN_PROGRESS', critical: 'OPEN' };
+        if (t.status !== statusMap[globalFilters.status]) return false;
+      }
       if (fromDate && t.date < fromDate) return false;
       if (toDate && t.date > toDate) return false;
       return true;
     });
-  }, [clientFilter, categoryFilter, statusFilter, fromDate, toDate]);
+  }, [globalFilters, fromDate, toDate]);
 
   const stats = useMemo(() => ({
     total: filteredTickets.length,

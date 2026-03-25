@@ -341,7 +341,7 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="support-tickets" className="mt-0">
-          <SupportTicketsTab />
+          <SupportTicketsTab globalFilters={globalFilters} />
         </TabsContent>
       </Tabs>
     </div>
