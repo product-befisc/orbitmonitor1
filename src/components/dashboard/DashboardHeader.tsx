@@ -8,6 +8,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { UsageSource } from './UsageChart';
+import { GlobalFilters, type GlobalFilterState } from './GlobalFilters';
 
 export type Environment = 'staging' | 'production';
 
@@ -30,6 +31,11 @@ interface DashboardHeaderProps {
   onLogout: () => void;
   apiCount: number;
   clientCount: number;
+  globalFilters: GlobalFilterState;
+  onGlobalFiltersChange: (filters: GlobalFilterState) => void;
+  filterClients: string[];
+  filterAPIs: string[];
+  filterSalesPersons: string[];
 }
 
 export function DashboardHeader({
