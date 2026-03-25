@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
 import { toast } from '@/hooks/use-toast';
+import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
 
 type DashboardView =
   | { type: 'overview' }
@@ -29,6 +30,8 @@ type DashboardView =
 
 const RATE_PER_CALL = 0.012;
 
+const salesPersons = ['Rahul Sharma', 'Priya Patel', 'Amit Kumar', 'Sneha Gupta', 'Vikram Singh', 'Neha Joshi'];
+
 const Index = () => {
   const [view, setView] = useState<DashboardView>({ type: 'overview' });
   const [usageSource, setUsageSource] = useState<UsageSource>('overall');
@@ -36,10 +39,13 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [drillDown, setDrillDown] = useState<{ dayData: StatusDayData; apis: typeof mockAPIs } | null>(null);
+  const [globalFilters, setGlobalFilters] = useState<GlobalFilterState>({
+    client: 'all', api: 'all', status: 'all', salesPerson: 'all',
+  });
 
   const clientData = useMemo(() => getClientUsageData(mockAPIs), []);
-  const stats = useMemo(() => getAggregatedStats(mockAPIs), []);
-  const sortedAPIs = useMemo(() => [...mockAPIs].sort((a, b) => b.currentCalls - a.currentCalls), []);
+  const allClients = useMemo(() => [...new Set(mockAPIs.map(a => a.client))], []);
+  const allAPINames = useMemo(() => [...new Set(mockAPIs.map(a => a.name))], []);
 
   const searchSuggestions = useMemo(() => {
     const names = mockAPIs.map(a => a.name);
@@ -47,13 +53,19 @@ const Index = () => {
     return [...clients, ...names];
   }, []);
 
+  // Apply global filters + search
   const filteredAPIs = useMemo(() => {
-    if (!searchQuery) return mockAPIs;
-    const q = searchQuery.toLowerCase();
-    return mockAPIs.filter(a =>
-      a.name.toLowerCase().includes(q) || a.client.toLowerCase().includes(q)
-    );
-  }, [searchQuery]);
+    return mockAPIs.filter(a => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!a.name.toLowerCase().includes(q) && !a.client.toLowerCase().includes(q)) return false;
+      }
+      if (globalFilters.client !== 'all' && a.client !== globalFilters.client) return false;
+      if (globalFilters.api !== 'all' && a.name !== globalFilters.api) return false;
+      if (globalFilters.status !== 'all' && a.status !== globalFilters.status) return false;
+      return true;
+    });
+  }, [searchQuery, globalFilters]);
 
   const filteredSortedAPIs = useMemo(() =>
     [...filteredAPIs].sort((a, b) => b.currentCalls - a.currentCalls), [filteredAPIs]);
