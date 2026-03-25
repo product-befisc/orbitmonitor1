@@ -76,42 +76,10 @@ export const SupportTicketsTab = ({ globalFilters }: SupportTicketsTabProps) => 
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Date Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Client Name</p>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {uniqueClients.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Category</p>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger><SelectValue placeholder="Select category..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Status</p>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger><SelectValue placeholder="Select status..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="OPEN">Open</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-2 gap-4 max-w-md">
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">From</p>
               <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
