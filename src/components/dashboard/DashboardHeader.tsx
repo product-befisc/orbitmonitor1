@@ -8,6 +8,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { UsageSource } from './UsageChart';
+import { GlobalFilters, type GlobalFilterState } from './GlobalFilters';
 
 export type Environment = 'staging' | 'production';
 
@@ -30,6 +31,11 @@ interface DashboardHeaderProps {
   onLogout: () => void;
   apiCount: number;
   clientCount: number;
+  globalFilters: GlobalFilterState;
+  onGlobalFiltersChange: (filters: GlobalFilterState) => void;
+  filterClients: string[];
+  filterAPIs: string[];
+  filterSalesPersons: string[];
 }
 
 export function DashboardHeader({
@@ -46,6 +52,11 @@ export function DashboardHeader({
   onLogout,
   apiCount,
   clientCount,
+  globalFilters,
+  onGlobalFiltersChange,
+  filterClients,
+  filterAPIs,
+  filterSalesPersons,
 }: DashboardHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -203,6 +214,13 @@ export function DashboardHeader({
               />
             </PopoverContent>
           </Popover>
+          <GlobalFilters
+            filters={globalFilters}
+            onFiltersChange={onGlobalFiltersChange}
+            clients={filterClients}
+            apis={filterAPIs}
+            salesPersons={filterSalesPersons}
+          />
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Report</span>
@@ -327,6 +345,17 @@ export function DashboardHeader({
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Filters</p>
+              <GlobalFilters
+                filters={globalFilters}
+                onFiltersChange={onGlobalFiltersChange}
+                clients={filterClients}
+                apis={filterAPIs}
+                salesPersons={filterSalesPersons}
+              />
             </div>
 
             <div className="flex gap-2">

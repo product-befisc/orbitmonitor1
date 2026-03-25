@@ -3,33 +3,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Plus } from 'lucide-react';
 import { mockTickets, type SupportTicket } from '@/lib/mockTickets';
 import { SupportTicketDetail } from './SupportTicketDetail';
+import type { GlobalFilterState } from './GlobalFilters';
 
-export const SupportTicketsTab = () => {
+interface SupportTicketsTabProps {
+  globalFilters: GlobalFilterState;
+}
+
+export const SupportTicketsTab = ({ globalFilters }: SupportTicketsTabProps) => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-  const [clientFilter, setClientFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  const uniqueClients = useMemo(() => [...new Set(mockTickets.map(t => t.client))], []);
-  const uniqueCategories = useMemo(() => [...new Set(mockTickets.map(t => t.category))], []);
-
   const filteredTickets = useMemo(() => {
     return mockTickets.filter(t => {
-      if (clientFilter !== 'all' && t.client !== clientFilter) return false;
-      if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (globalFilters.client !== 'all' && t.client !== globalFilters.client) return false;
+      if (globalFilters.status !== 'all') {
+        const statusMap: Record<string, string> = { healthy: 'CLOSED', warning: 'IN_PROGRESS', critical: 'OPEN' };
+        if (t.status !== statusMap[globalFilters.status]) return false;
+      }
       if (fromDate && t.date < fromDate) return false;
       if (toDate && t.date > toDate) return false;
       return true;
     });
-  }, [clientFilter, categoryFilter, statusFilter, fromDate, toDate]);
+  }, [globalFilters, fromDate, toDate]);
 
   const stats = useMemo(() => ({
     total: filteredTickets.length,
@@ -76,42 +76,10 @@ export const SupportTicketsTab = () => {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Date Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Client Name</p>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {uniqueClients.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Category</p>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger><SelectValue placeholder="Select category..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Status</p>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger><SelectValue placeholder="Select status..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="OPEN">Open</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-2 gap-4 max-w-md">
             <div>
               <p className="text-sm font-medium text-foreground mb-1.5">From</p>
               <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
