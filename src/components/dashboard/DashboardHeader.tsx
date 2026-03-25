@@ -5,14 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { UsageSource } from './UsageChart';
-import { GlobalFilters, type GlobalFilterState } from './GlobalFilters';
+import { GlobalFilters, type GlobalFilterState, type DateRange } from './GlobalFilters';
 
 export type Environment = 'staging' | 'production';
-
-export interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
 
 interface DashboardHeaderProps {
   environment: Environment;
