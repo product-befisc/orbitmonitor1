@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Download, LogOut, Search, Calendar, Menu, X, ChevronDown } from 'lucide-react';
+import { Download, LogOut, Search, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import type { UsageSource } from './UsageChart';
 import { GlobalFilters, type GlobalFilterState } from './GlobalFilters';
 
@@ -86,11 +83,6 @@ export function DashboardHeader({
     ? searchSuggestions.filter(s => s.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 8)
     : [];
 
-  const dateLabel = dateRange.from
-    ? dateRange.to
-      ? `${format(dateRange.from, 'MMM d')} – ${format(dateRange.to, 'MMM d, yyyy')}`
-      : format(dateRange.from, 'MMM d, yyyy')
-    : 'Select dates';
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
