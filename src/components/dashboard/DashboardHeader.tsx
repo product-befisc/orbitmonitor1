@@ -311,27 +311,6 @@ export function DashboardHeader({
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Date Range</p>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs justify-start">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {dateLabel}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="range"
-                    selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
-                    onSelect={(range) => onDateRangeChange({ from: range?.from, to: range?.to })}
-                    numberOfMonths={1}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Filters</p>
               <GlobalFilters
                 filters={globalFilters}
@@ -339,6 +318,8 @@ export function DashboardHeader({
                 clients={filterClients}
                 apis={filterAPIs}
                 salesPersons={filterSalesPersons}
+                dateRange={dateRange}
+                onDateRangeChange={onDateRangeChange}
               />
             </div>
 
