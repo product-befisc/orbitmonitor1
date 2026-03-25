@@ -196,30 +196,14 @@ export function DashboardHeader({
 
         {/* Right: Date + Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                <Calendar className="w-3.5 h-3.5" />
-                {dateLabel}
-                <ChevronDown className="w-3 h-3" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="range"
-                selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
-                onSelect={(range) => onDateRangeChange({ from: range?.from, to: range?.to })}
-                numberOfMonths={2}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
           <GlobalFilters
             filters={globalFilters}
             onFiltersChange={onGlobalFiltersChange}
             clients={filterClients}
             apis={filterAPIs}
             salesPersons={filterSalesPersons}
+            dateRange={dateRange}
+            onDateRangeChange={onDateRangeChange}
           />
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
