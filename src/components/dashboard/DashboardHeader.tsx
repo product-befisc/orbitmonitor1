@@ -214,6 +214,13 @@ export function DashboardHeader({
               />
             </PopoverContent>
           </Popover>
+          <GlobalFilters
+            filters={globalFilters}
+            onFiltersChange={onGlobalFiltersChange}
+            clients={filterClients}
+            apis={filterAPIs}
+            salesPersons={filterSalesPersons}
+          />
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Report</span>
