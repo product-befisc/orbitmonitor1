@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Zap, AlertTriangle, Server, DollarSign } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { UsageChart, type UsageSource } from '@/components/dashboard/UsageChart';
@@ -139,6 +140,7 @@ const Index = () => {
 
   const handleLogout = () => {
     toast({ title: 'Logged out', description: 'You have been logged out successfully.' });
+    navigate('/');
   };
 
   const handleEnvironmentChange = (env: Environment) => {
