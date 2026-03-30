@@ -103,6 +103,11 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI }
           ))}
         </div>
       </div>
+
+      {/* Date-wise API Breakdown Table */}
+      <div className="glass-card mt-6 p-5">
+        <ClientAPIDateTable apis={sortedAPIs} />
+      </div>
     </div>
   );
 }
