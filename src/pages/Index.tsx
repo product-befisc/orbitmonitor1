@@ -35,6 +35,7 @@ const RATE_PER_CALL = 0.012;
 const salesPersons = ['Rahul Sharma', 'Priya Patel', 'Amit Kumar', 'Sneha Gupta', 'Vikram Singh', 'Neha Joshi'];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState<DashboardView>({ type: 'overview' });
   const [usageSource, setUsageSource] = useState<UsageSource>('overall');
   const [environment, setEnvironment] = useState<Environment>('production');
