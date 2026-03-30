@@ -115,12 +115,23 @@ export function ClientAPIDateTable({ apis }: ClientAPIDateTableProps) {
                   </td>
                   {columns.map(col => {
                     const cell = generateCellData(api.currentCalls, col.seed, apiSeed);
+                    const isUp = cell.changePct > 0;
+                    const isDown = cell.changePct < 0;
                     return (
                       <td key={col.label} className="px-2 py-1.5 border-r border-border last:border-r-0">
                         <div className="space-y-0.5">
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Total Hits:</span>
-                            <span className="font-semibold">{formatNumber(cell.totalHits)}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-semibold">{formatNumber(cell.totalHits)}</span>
+                              <span className={cn(
+                                'inline-flex items-center gap-0.5 text-[8px] font-bold',
+                                isUp ? 'text-success' : isDown ? 'text-destructive' : 'text-muted-foreground'
+                              )}>
+                                {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : isDown ? <TrendingDown className="w-2.5 h-2.5" /> : null}
+                                {cell.changePct > 0 ? '+' : ''}{cell.changePct.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-success">Success:</span>
