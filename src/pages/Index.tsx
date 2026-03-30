@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Zap, AlertTriangle, Server, DollarSign } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { UsageChart, type UsageSource } from '@/components/dashboard/UsageChart';
@@ -34,6 +35,7 @@ const RATE_PER_CALL = 0.012;
 const salesPersons = ['Rahul Sharma', 'Priya Patel', 'Amit Kumar', 'Sneha Gupta', 'Vikram Singh', 'Neha Joshi'];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState<DashboardView>({ type: 'overview' });
   const [usageSource, setUsageSource] = useState<UsageSource>('overall');
   const [environment, setEnvironment] = useState<Environment>('production');
@@ -139,6 +141,7 @@ const Index = () => {
 
   const handleLogout = () => {
     toast({ title: 'Logged out', description: 'You have been logged out successfully.' });
+    navigate('/');
   };
 
   const handleEnvironmentChange = (env: Environment) => {
