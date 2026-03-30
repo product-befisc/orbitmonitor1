@@ -194,6 +194,31 @@ export function DashboardHeader({
             dateRange={dateRange}
             onDateRangeChange={onDateRangeChange}
           />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">Platforms</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href="https://sftp.example.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <ExternalLink className="w-3.5 h-3.5" /> SFTP Platform
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://invoicing.example.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <ExternalLink className="w-3.5 h-3.5" /> Invoicing Platform
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://dashboard.example.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <ExternalLink className="w-3.5 h-3.5" /> Customer Dashboard
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Report</span>
