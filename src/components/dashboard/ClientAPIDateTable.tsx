@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, subMonths } from 'date-fns';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { APIData } from '@/lib/mockData';
 
@@ -41,7 +42,13 @@ function generateCellData(apiCalls: number, seed: number, apiSeed: number) {
   const success = Math.round(totalHits * successPct / 100);
   const sourceDown = Math.round(totalHits * sourceDownPct / 100);
   const others = totalHits - success - sourceDown;
-  return { totalHits, success, sourceDown, others, successPct: successPct.toFixed(1), sourceDownPct: sourceDownPct.toFixed(1), othersPct: othersPct.toFixed(1) };
+
+  // Previous period data (use a shifted seed)
+  const prevRng = ((seed * 23 + apiSeed * 13 + 7) % 89) / 89;
+  const prevTotalHits = Math.round(apiCalls * (0.04 + prevRng * 0.28));
+  const changePct = prevTotalHits > 0 ? ((totalHits - prevTotalHits) / prevTotalHits) * 100 : 0;
+
+  return { totalHits, success, sourceDown, others, successPct: successPct.toFixed(1), sourceDownPct: sourceDownPct.toFixed(1), othersPct: othersPct.toFixed(1), prevTotalHits, changePct };
 }
 
 function formatNumber(num: number) {
@@ -92,8 +99,9 @@ export function ClientAPIDateTable({ apis }: ClientAPIDateTableProps) {
             <tr>
               <th className="px-3 py-2 text-left font-semibold text-muted-foreground border-r border-border min-w-[120px]">API Name</th>
               {columns.map(col => (
-                <th key={col.label} className="px-2 py-2 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 min-w-[110px]">
-                  {col.label}
+                <th key={col.label} className="px-2 py-2 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 min-w-[130px]">
+                  <div>{col.label}</div>
+                  <div className="text-[8px] font-normal text-muted-foreground/70">vs prev period</div>
                 </th>
               ))}
             </tr>
@@ -108,12 +116,23 @@ export function ClientAPIDateTable({ apis }: ClientAPIDateTableProps) {
                   </td>
                   {columns.map(col => {
                     const cell = generateCellData(api.currentCalls, col.seed, apiSeed);
+                    const isUp = cell.changePct > 0;
+                    const isDown = cell.changePct < 0;
                     return (
                       <td key={col.label} className="px-2 py-1.5 border-r border-border last:border-r-0">
                         <div className="space-y-0.5">
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Total Hits:</span>
-                            <span className="font-semibold">{formatNumber(cell.totalHits)}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-semibold">{formatNumber(cell.totalHits)}</span>
+                              <span className={cn(
+                                'inline-flex items-center gap-0.5 text-[8px] font-bold',
+                                isUp ? 'text-success' : isDown ? 'text-destructive' : 'text-muted-foreground'
+                              )}>
+                                {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : isDown ? <TrendingDown className="w-2.5 h-2.5" /> : null}
+                                {cell.changePct > 0 ? '+' : ''}{cell.changePct.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-success">Success:</span>
