@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Download, LogOut, Search, Menu, X } from 'lucide-react';
+import { Download, LogOut, Search, Menu, X, ExternalLink } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
