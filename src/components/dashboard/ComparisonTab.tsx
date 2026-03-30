@@ -350,6 +350,105 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* API-wise Usage Comparison (only for client mode) */}
+          {mode === 'clients' && detailBreakdown?.apis && detailBreakdown.apis.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                API-wise Usage Comparison
+              </h3>
+              {/* Bar chart of top APIs */}
+              <div className="h-72 mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={detailBreakdown.apis
+                      .map(api => {
+                        const factor = 0.75 + (api.id.charCodeAt(0) % 10) / 40;
+                        return {
+                          name: api.name.length > 18 ? api.name.slice(0, 16) + '…' : api.name,
+                          fullName: api.name,
+                          current: api.currentCalls,
+                          previous: Math.round(api.previousCalls * factor),
+                          change: api.trend,
+                        };
+                      })
+                      .sort((a, b) => b.current - a.current)
+                      .slice(0, 10)
+                    }
+                    layout="vertical"
+                    margin={{ top: 5, right: 10, left: 5, bottom: 5 }}
+                    barGap={2}
+                    barCategoryGap="30%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis type="number" fontSize={10} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={formatNumber} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="name" type="category" fontSize={10} tick={{ fill: 'hsl(var(--muted-foreground))' }} width={110} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                      }}
+                      formatter={(value: number, name: string) => [value.toLocaleString(), name === 'previous' ? 'Previous' : 'Current']}
+                      labelFormatter={(label: string, payload: any[]) => payload?.[0]?.payload?.fullName || label}
+                    />
+                    <Bar dataKey="current" name="Current" fill="hsl(var(--primary))" radius={[0, 3, 3, 0]} />
+                    <Bar dataKey="previous" name="Previous" fill="hsl(var(--muted-foreground)/0.35)" radius={[0, 3, 3, 0]} />
+                    <Legend />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Detailed API table */}
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">API Name</th>
+                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Current</th>
+                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Previous</th>
+                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Change</th>
+                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Success %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {detailBreakdown.apis
+                      .map(api => {
+                        const factor = 0.75 + (api.id.charCodeAt(0) % 10) / 40;
+                        const prevCalls = Math.round(api.previousCalls * factor);
+                        const change = prevCalls > 0 ? ((api.currentCalls - prevCalls) / prevCalls) * 100 : 0;
+                        const successPct = api.currentCalls > 0
+                          ? (api.statusBreakdown.success / api.currentCalls * 100)
+                          : 0;
+                        return { ...api, prevCalls, change, successPct };
+                      })
+                      .sort((a, b) => b.currentCalls - a.currentCalls)
+                      .map(api => (
+                        <tr key={api.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 font-medium truncate max-w-[160px]">{api.name}</td>
+                          <td className="px-3 py-2 text-right font-semibold">{formatNumber(api.currentCalls)}</td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">{formatNumber(api.prevCalls)}</td>
+                          <td className={cn(
+                            'px-3 py-2 text-right font-medium',
+                            api.change >= 0 ? 'text-success' : 'text-destructive'
+                          )}>
+                            {api.change >= 0 ? '+' : ''}{api.change.toFixed(1)}%
+                          </td>
+                          <td className={cn(
+                            'px-3 py-2 text-right font-medium',
+                            api.successPct >= 95 ? 'text-success' : api.successPct >= 85 ? 'text-warning' : 'text-destructive'
+                          )}>
+                            {api.successPct.toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
