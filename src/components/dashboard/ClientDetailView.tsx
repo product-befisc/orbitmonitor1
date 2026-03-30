@@ -1,6 +1,7 @@
 import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UsageChart } from './UsageChart';
+import { ClientAPIDateTable } from './ClientAPIDateTable';
 import { ClientUsageData, APIData } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 
@@ -101,6 +102,11 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI }
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Date-wise API Breakdown Table */}
+      <div className="glass-card mt-6 p-5">
+        <ClientAPIDateTable apis={sortedAPIs} />
       </div>
     </div>
   );
