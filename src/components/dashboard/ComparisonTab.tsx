@@ -400,53 +400,8 @@ export function ComparisonTab({ apis }: ComparisonTabProps) {
                 </ResponsiveContainer>
               </div>
 
-              {/* Detailed API table */}
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">API Name</th>
-                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Current</th>
-                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Previous</th>
-                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Change</th>
-                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Success %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {detailBreakdown.apis
-                      .map(api => {
-                        const factor = 0.75 + (api.id.charCodeAt(0) % 10) / 40;
-                        const prevCalls = Math.round(api.previousCalls * factor);
-                        const change = prevCalls > 0 ? ((api.currentCalls - prevCalls) / prevCalls) * 100 : 0;
-                        const successPct = api.currentCalls > 0
-                          ? (api.statusBreakdown.success / api.currentCalls * 100)
-                          : 0;
-                        return { ...api, prevCalls, change, successPct };
-                      })
-                      .sort((a, b) => b.currentCalls - a.currentCalls)
-                      .map(api => (
-                        <tr key={api.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-3 py-2 font-medium truncate max-w-[160px]">{api.name}</td>
-                          <td className="px-3 py-2 text-right font-semibold">{formatNumber(api.currentCalls)}</td>
-                          <td className="px-3 py-2 text-right text-muted-foreground">{formatNumber(api.prevCalls)}</td>
-                          <td className={cn(
-                            'px-3 py-2 text-right font-medium',
-                            api.change >= 0 ? 'text-success' : 'text-destructive'
-                          )}>
-                            {api.change >= 0 ? '+' : ''}{api.change.toFixed(1)}%
-                          </td>
-                          <td className={cn(
-                            'px-3 py-2 text-right font-medium',
-                            api.successPct >= 95 ? 'text-success' : api.successPct >= 85 ? 'text-warning' : 'text-destructive'
-                          )}>
-                            {api.successPct.toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))
-                    }
-                  </tbody>
-                </table>
-              </div>
+              {/* Date-wise API Breakdown Table */}
+              <ClientAPIDateTable apis={detailBreakdown.apis} formatNumber={formatNumber} />
             </div>
           )}
         </div>
