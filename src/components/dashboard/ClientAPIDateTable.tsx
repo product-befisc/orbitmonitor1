@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, subMonths } from 'date-fns';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { APIData } from '@/lib/mockData';
 
