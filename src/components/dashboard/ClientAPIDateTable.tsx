@@ -41,7 +41,13 @@ function generateCellData(apiCalls: number, seed: number, apiSeed: number) {
   const success = Math.round(totalHits * successPct / 100);
   const sourceDown = Math.round(totalHits * sourceDownPct / 100);
   const others = totalHits - success - sourceDown;
-  return { totalHits, success, sourceDown, others, successPct: successPct.toFixed(1), sourceDownPct: sourceDownPct.toFixed(1), othersPct: othersPct.toFixed(1) };
+
+  // Previous period data (use a shifted seed)
+  const prevRng = ((seed * 23 + apiSeed * 13 + 7) % 89) / 89;
+  const prevTotalHits = Math.round(apiCalls * (0.04 + prevRng * 0.28));
+  const changePct = prevTotalHits > 0 ? ((totalHits - prevTotalHits) / prevTotalHits) * 100 : 0;
+
+  return { totalHits, success, sourceDown, others, successPct: successPct.toFixed(1), sourceDownPct: sourceDownPct.toFixed(1), othersPct: othersPct.toFixed(1), prevTotalHits, changePct };
 }
 
 function formatNumber(num: number) {
