@@ -100,8 +100,7 @@ export function ClientAPIDateTable({ apis }: ClientAPIDateTableProps) {
               <th className="px-3 py-2 text-left font-semibold text-muted-foreground border-r border-border min-w-[120px]">API Name</th>
               {columns.map(col => (
                 <th key={col.label} className="px-2 py-2 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 min-w-[130px]">
-                  <div>{col.label}</div>
-                  <div className="text-[8px] font-normal text-muted-foreground/70">vs prev period</div>
+                  {col.label}
                 </th>
               ))}
             </tr>
