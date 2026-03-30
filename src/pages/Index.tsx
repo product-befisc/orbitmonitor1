@@ -18,6 +18,7 @@ import { SupportTicketsTab } from '@/components/dashboard/SupportTicketsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
+import { NonOnboardedClientsCard } from '@/components/dashboard/NonOnboardedClientsCard';
 import { toast } from '@/hooks/use-toast';
 import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
 
@@ -289,6 +290,9 @@ const Index = () => {
               status="healthy"
             />
           </div>
+
+          {/* Non-Onboarded Clients */}
+          <NonOnboardedClientsCard />
 
           {/* API Consumption */}
           <APIConsumptionChart
