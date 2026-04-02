@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
 import { NonOnboardedClientsCard } from '@/components/dashboard/NonOnboardedClientsCard';
+import { ZeroHitAPIsCard } from '@/components/dashboard/ZeroHitAPIsCard';
 import { toast } from '@/hooks/use-toast';
 import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
 
@@ -294,8 +295,11 @@ const Index = () => {
             />
           </div>
 
-          {/* Non-Onboarded Clients */}
-          <NonOnboardedClientsCard />
+          {/* Non-Onboarded & Zero-Hit Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <NonOnboardedClientsCard />
+            <ZeroHitAPIsCard />
+          </div>
 
           {/* API Consumption */}
           <APIConsumptionChart
