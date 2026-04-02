@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
 import { NonOnboardedClientsCard } from '@/components/dashboard/NonOnboardedClientsCard';
+import { ZeroHitAPIsCard } from '@/components/dashboard/ZeroHitAPIsCard';
 import { toast } from '@/hooks/use-toast';
 import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
 
