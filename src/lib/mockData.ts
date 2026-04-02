@@ -248,6 +248,8 @@ export interface ClientUsageData {
   dailyData: { date: string; calls: number; previousCalls: number }[];
   weeklyData: { week: string; calls: number; previousCalls: number }[];
   monthlyData: { month: string; calls: number; previousYear: number }[];
+  notOnboarded: boolean;
+  zeroHitAPIs: number;
 }
 
 export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
