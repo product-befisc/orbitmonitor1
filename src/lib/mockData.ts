@@ -248,6 +248,8 @@ export interface ClientUsageData {
   dailyData: { date: string; calls: number; previousCalls: number }[];
   weeklyData: { week: string; calls: number; previousCalls: number }[];
   monthlyData: { month: string; calls: number; previousYear: number }[];
+  notOnboarded: boolean;
+  zeroHitAPIs: number;
 }
 
 export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
@@ -297,6 +299,8 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  const nonOnboardedClients = new Set(['ByteWorks', 'SaaS Hub', 'FlowLogic', 'SyncMaster', 'NetPrime', 'DataBridge', 'CloudNest', 'QuickAPI', 'TraceLink']);
+
   return Array.from(clientMap.entries())
     .map(([client, data]) => ({
       client,
@@ -313,7 +317,9 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
       monthlyData: months.map(month => {
         const d = data.monthlyData.get(month) || { calls: 0, previousYear: 0 };
         return { month, calls: d.calls, previousYear: d.previousYear };
-      })
+      }),
+      notOnboarded: nonOnboardedClients.has(client),
+      zeroHitAPIs: Math.floor(Math.random() * 4),
     }))
     .sort((a, b) => b.totalCalls - a.totalCalls);
 }
