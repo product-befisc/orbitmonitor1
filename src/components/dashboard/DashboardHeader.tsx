@@ -22,6 +22,7 @@ interface DashboardHeaderProps {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   onDownloadReport: () => void;
+  onBirdsEyeView: () => void;
   onLogout: () => void;
   apiCount: number;
   clientCount: number;
