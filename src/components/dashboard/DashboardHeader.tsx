@@ -221,6 +221,10 @@ export function DashboardHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button variant="outline" size="sm" onClick={onBirdsEyeView} className="gap-1.5 text-xs">
+            <Eye className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Bird's Eye</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Report</span>
