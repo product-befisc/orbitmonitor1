@@ -165,6 +165,7 @@ const Index = () => {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         onDownloadReport={handleDownloadReport}
+        onBirdsEyeView={() => setShowBirdsEye(true)}
         onLogout={handleLogout}
         apiCount={mockAPIs.length}
         clientCount={clientData.length}
