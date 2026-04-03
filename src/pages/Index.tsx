@@ -176,6 +176,7 @@ const Index = () => {
         filterSalesPersons={salesPersons}
       />
       {content}
+      {showBirdsEye && <BirdsEyeView apis={filteredAPIs} onClose={() => setShowBirdsEye(false)} />}
     </div>
   );
 
