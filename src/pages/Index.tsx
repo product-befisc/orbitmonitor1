@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Zap, AlertTriangle, Server, DollarSign } from 'lucide-react';
+import { BirdsEyeView } from '@/components/dashboard/BirdsEyeView';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { UsageChart, type UsageSource } from '@/components/dashboard/UsageChart';
 import { ClientList } from '@/components/dashboard/ClientList';
@@ -43,6 +44,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [drillDown, setDrillDown] = useState<{ dayData: StatusDayData; apis: typeof mockAPIs } | null>(null);
+  const [showBirdsEye, setShowBirdsEye] = useState(false);
   const [globalFilters, setGlobalFilters] = useState<GlobalFilterState>({
     client: 'all', api: 'all', status: 'all', salesPerson: 'all',
   });
@@ -163,6 +165,7 @@ const Index = () => {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         onDownloadReport={handleDownloadReport}
+        onBirdsEyeView={() => setShowBirdsEye(true)}
         onLogout={handleLogout}
         apiCount={mockAPIs.length}
         clientCount={clientData.length}
@@ -173,6 +176,7 @@ const Index = () => {
         filterSalesPersons={salesPersons}
       />
       {content}
+      {showBirdsEye && <BirdsEyeView apis={filteredAPIs} onClose={() => setShowBirdsEye(false)} />}
     </div>
   );
 

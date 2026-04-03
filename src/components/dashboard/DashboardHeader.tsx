@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Download, LogOut, Search, Menu, X, ExternalLink } from 'lucide-react';
+import { Download, LogOut, Search, Menu, X, ExternalLink, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ interface DashboardHeaderProps {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   onDownloadReport: () => void;
+  onBirdsEyeView: () => void;
   onLogout: () => void;
   apiCount: number;
   clientCount: number;
@@ -43,6 +44,7 @@ export function DashboardHeader({
   dateRange,
   onDateRangeChange,
   onDownloadReport,
+  onBirdsEyeView,
   onLogout,
   apiCount,
   clientCount,
@@ -219,6 +221,10 @@ export function DashboardHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button variant="outline" size="sm" onClick={onBirdsEyeView} className="gap-1.5 text-xs">
+            <Eye className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Bird's Eye</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={onDownloadReport} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Report</span>
