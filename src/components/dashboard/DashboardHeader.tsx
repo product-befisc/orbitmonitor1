@@ -44,6 +44,7 @@ export function DashboardHeader({
   dateRange,
   onDateRangeChange,
   onDownloadReport,
+  onBirdsEyeView,
   onLogout,
   apiCount,
   clientCount,
