@@ -44,6 +44,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [drillDown, setDrillDown] = useState<{ dayData: StatusDayData; apis: typeof mockAPIs } | null>(null);
+  const [showBirdsEye, setShowBirdsEye] = useState(false);
   const [globalFilters, setGlobalFilters] = useState<GlobalFilterState>({
     client: 'all', api: 'all', status: 'all', salesPerson: 'all',
   });
