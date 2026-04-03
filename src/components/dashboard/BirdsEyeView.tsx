@@ -125,7 +125,7 @@ export function BirdsEyeView({ apis, onClose }: BirdsEyeViewProps) {
 
   const CustomTreemapContent = (props: any) => {
     const { x, y, width, height, name, color } = props;
-    if (width < 40 || height < 25) return null;
+    if (!name || !width || !height || width < 40 || height < 25) return null;
     return (
       <g>
         <rect x={x} y={y} width={width} height={height} rx={4} fill={color} fillOpacity={0.85} stroke="hsl(var(--background))" strokeWidth={2} />
