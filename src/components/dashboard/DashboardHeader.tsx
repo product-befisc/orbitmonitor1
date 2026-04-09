@@ -196,6 +196,20 @@ export function DashboardHeader({
             dateRange={dateRange}
             onDateRangeChange={onDateRangeChange}
           />
+          {([globalFilters.client, globalFilters.api, globalFilters.status, globalFilters.salesPerson].some(v => v !== 'all') || dateRange.from) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => {
+                onGlobalFiltersChange({ client: 'all', api: 'all', status: 'all', salesPerson: 'all' });
+                onDateRangeChange({ from: undefined, to: undefined });
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+              Clear
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs">
