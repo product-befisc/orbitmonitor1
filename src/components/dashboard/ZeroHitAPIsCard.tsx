@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 interface ZeroHitAPI {
@@ -15,20 +17,20 @@ interface ZeroHitAPI {
 }
 
 const MOCK_ZERO_HIT_APIS: ZeroHitAPI[] = [
-  { client: 'TechCorp', apiName: 'Address Verify v2', onboardedDate: '2026-01-15', clientVolume: 245000 },
-  { client: 'TechCorp', apiName: 'Credit Score Pro', onboardedDate: '2026-02-20', clientVolume: 245000 },
-  { client: 'FinServe', apiName: 'PAN Validate', onboardedDate: '2025-12-10', clientVolume: 89000 },
-  { client: 'DataSync', apiName: 'GST Lookup', onboardedDate: '2026-03-01', clientVolume: 156000 },
-  { client: 'DataSync', apiName: 'Bank Statement Parse', onboardedDate: '2026-01-28', clientVolume: 156000 },
-  { client: 'CloudNest', apiName: 'eSign API', onboardedDate: '2026-02-14', clientVolume: 32000 },
-  { client: 'RetailMax', apiName: 'Aadhaar OTP', onboardedDate: '2025-11-22', clientVolume: 410000 },
-  { client: 'RetailMax', apiName: 'Digilocker Pull', onboardedDate: '2026-03-10', clientVolume: 410000 },
-  { client: 'RetailMax', apiName: 'CKYC Search', onboardedDate: '2026-01-05', clientVolume: 410000 },
-  { client: 'PayFlow', apiName: 'UPI Collect', onboardedDate: '2026-02-28', clientVolume: 12000 },
+  { client: 'TechCorp', apiName: 'Address Verify v2', onboardedDate: '2026-01-15', clientVolume: 150 },
+  { client: 'TechCorp', apiName: 'Credit Score Pro', onboardedDate: '2026-02-20', clientVolume: 150 },
+  { client: 'FinServe', apiName: 'PAN Validate', onboardedDate: '2025-12-10', clientVolume: 520 },
+  { client: 'DataSync', apiName: 'GST Lookup', onboardedDate: '2026-03-01', clientVolume: 3200 },
+  { client: 'DataSync', apiName: 'Bank Statement Parse', onboardedDate: '2026-01-28', clientVolume: 3200 },
+  { client: 'CloudNest', apiName: 'eSign API', onboardedDate: '2026-02-14', clientVolume: 75 },
+  { client: 'RetailMax', apiName: 'Aadhaar OTP', onboardedDate: '2025-11-22', clientVolume: 4800 },
+  { client: 'RetailMax', apiName: 'Digilocker Pull', onboardedDate: '2026-03-10', clientVolume: 4800 },
+  { client: 'RetailMax', apiName: 'CKYC Search', onboardedDate: '2026-01-05', clientVolume: 4800 },
+  { client: 'PayFlow', apiName: 'UPI Collect', onboardedDate: '2026-02-28', clientVolume: 350 },
 ];
 
 type TimeRange = '1m' | '3m' | '6m' | 'all';
-type VolumeRange = 'all' | '0-50k' | '50k-100k' | '100k-500k' | '500k+';
+type VolumeRange = 'all' | '0-200' | '200-800' | '1000-5000' | 'custom';
 
 const TIME_LABELS: Record<TimeRange, string> = {
   '1m': '1M',
@@ -39,10 +41,10 @@ const TIME_LABELS: Record<TimeRange, string> = {
 
 const VOLUME_OPTIONS: { value: VolumeRange; label: string }[] = [
   { value: 'all', label: 'All Volumes' },
-  { value: '0-50k', label: '0 – 50K' },
-  { value: '50k-100k', label: '50K – 100K' },
-  { value: '100k-500k', label: '100K – 500K' },
-  { value: '500k+', label: '500K+' },
+  { value: '0-200', label: '0 – 200' },
+  { value: '200-800', label: '200 – 800' },
+  { value: '1000-5000', label: '1K – 5K' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 const formatDate = (d: string) => {
@@ -56,13 +58,13 @@ const getMonthsAgo = (months: number) => {
   return d;
 };
 
-const matchesVolume = (volume: number, range: VolumeRange) => {
+const matchesVolume = (volume: number, range: VolumeRange, customMin: number, customMax: number) => {
   switch (range) {
     case 'all': return true;
-    case '0-50k': return volume <= 50000;
-    case '50k-100k': return volume > 50000 && volume <= 100000;
-    case '100k-500k': return volume > 100000 && volume <= 500000;
-    case '500k+': return volume > 500000;
+    case '0-200': return volume <= 200;
+    case '200-800': return volume > 200 && volume <= 800;
+    case '1000-5000': return volume >= 1000 && volume <= 5000;
+    case 'custom': return volume >= customMin && (customMax === 0 ? true : volume <= customMax);
   }
 };
 
@@ -71,25 +73,26 @@ export function ZeroHitAPIsCard() {
   const [openClients, setOpenClients] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [volumeRange, setVolumeRange] = useState<VolumeRange>('all');
+  const [customMin, setCustomMin] = useState('');
+  const [customMax, setCustomMax] = useState('');
 
   const filtered = useMemo(() => {
+    const cMin = Number(customMin) || 0;
+    const cMax = Number(customMax) || 0;
     return MOCK_ZERO_HIT_APIS.filter(a => {
-      // search
       if (search) {
         const q = search.toLowerCase();
         if (!a.client.toLowerCase().includes(q) && !a.apiName.toLowerCase().includes(q)) return false;
       }
-      // time range
       if (timeRange !== 'all') {
         const months = timeRange === '1m' ? 1 : timeRange === '3m' ? 3 : 6;
         const cutoff = getMonthsAgo(months);
         if (new Date(a.onboardedDate) < cutoff) return false;
       }
-      // volume range
-      if (!matchesVolume(a.clientVolume, volumeRange)) return false;
+      if (!matchesVolume(a.clientVolume, volumeRange, cMin, cMax)) return false;
       return true;
     });
-  }, [search, timeRange, volumeRange]);
+  }, [search, timeRange, volumeRange, customMin, customMax]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ZeroHitAPI[]>();
@@ -144,18 +147,50 @@ export function ZeroHitAPIsCard() {
               className="h-7 pl-7 text-[11px] bg-muted/40 border-border/50"
             />
           </div>
-          <Select value={volumeRange} onValueChange={(v) => setVolumeRange(v as VolumeRange)}>
-            <SelectTrigger className="h-7 w-[130px] text-[11px] bg-muted/40 border-border/50">
-              <SelectValue placeholder="Volume" />
-            </SelectTrigger>
-            <SelectContent>
-              {VOLUME_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="h-7 px-2 text-[11px] bg-muted/40 border-border/50 min-w-[120px] justify-between">
+                {volumeRange === 'custom' && customMin
+                  ? `${customMin} – ${customMax || '∞'}`
+                  : VOLUME_OPTIONS.find(o => o.value === volumeRange)?.label ?? 'Volume'}
+                <ChevronDown className="w-3 h-3 ml-1 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-1">
+                {VOLUME_OPTIONS.filter(o => o.value !== 'custom').map(opt => (
+                  <Button
+                    key={opt.value}
+                    variant={volumeRange === opt.value ? 'secondary' : 'ghost'}
+                    className="w-full justify-start text-xs h-7"
+                    onClick={() => { setVolumeRange(opt.value); setCustomMin(''); setCustomMax(''); }}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+                <div className="border-t border-border/50 pt-1 mt-1">
+                  <p className="text-[10px] text-muted-foreground px-2 mb-1">Custom Range</p>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={customMin}
+                      onChange={e => { setCustomMin(e.target.value); setVolumeRange('custom'); }}
+                      className="h-6 text-[11px] px-1.5"
+                    />
+                    <span className="text-[10px] text-muted-foreground">–</span>
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={customMax}
+                      onChange={e => { setCustomMax(e.target.value); setVolumeRange('custom'); }}
+                      className="h-6 text-[11px] px-1.5"
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <ToggleGroup
             type="single"
             value={timeRange}
