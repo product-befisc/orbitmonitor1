@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 interface APIDoc {
@@ -32,42 +31,77 @@ const API_DOCS: APIDoc[] = [
   { id: 'kyb-4', name: 'Shop & Establishment API', category: 'KYB', status: 'Discontinued', docUrl: '#', description: 'Verify shop and establishment registration' },
   { id: 'kyb-5', name: 'UDYAM Registration API', category: 'KYB', status: 'Live', docUrl: '#', description: 'Verify MSME Udyam registration' },
 
-  // Utilities
-  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utilities', status: 'Live', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
-  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utilities', status: 'Live', docUrl: '#', description: 'Get location details from pincode' },
-  { id: 'util-3', name: 'Email Verification API', category: 'Utilities', status: 'Live', docUrl: '#', description: 'Validate email address deliverability' },
-  { id: 'util-4', name: 'Phone Number Validation API', category: 'Utilities', status: 'Discontinued', docUrl: '#', description: 'Validate and identify phone numbers' },
-  { id: 'util-5', name: 'OCR Document Parser API', category: 'Utilities', status: 'Live', docUrl: '#', description: 'Extract text and data from documents' },
+  // Mobile Number Lookup
+  { id: 'mob-1', name: 'Mobile Number to Name API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Fetch name associated with a mobile number' },
+  { id: 'mob-2', name: 'Mobile Number Verification API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Verify if a mobile number is active' },
+  { id: 'mob-3', name: 'Mobile to Aadhaar Link Check API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Check Aadhaar linkage with mobile number' },
 
-  // Banking
-  { id: 'bank-1', name: 'Bank Account Verification API', category: 'Banking', status: 'Live', docUrl: '#', description: 'Penny-drop based account verification' },
-  { id: 'bank-2', name: 'Bank Statement Analysis API', category: 'Banking', status: 'Live', docUrl: '#', description: 'Parse and analyze bank statements' },
-  { id: 'bank-3', name: 'NACH/eMandate API', category: 'Banking', status: 'Live', docUrl: '#', description: 'Automate recurring payment mandates' },
-  { id: 'bank-4', name: 'UPI Verification API', category: 'Banking', status: 'Live', docUrl: '#', description: 'Verify UPI VPA and linked account' },
+  // Digital Footprint
+  { id: 'df-1', name: 'Email Risk Score API', category: 'Digital Footprint', status: 'Live', docUrl: '#', description: 'Assess risk score for email addresses' },
+  { id: 'df-2', name: 'Social Media Lookup API', category: 'Digital Footprint', status: 'Live', docUrl: '#', description: 'Lookup social media profiles from identifiers' },
+  { id: 'df-3', name: 'Digital Identity Verification API', category: 'Digital Footprint', status: 'Discontinued', docUrl: '#', description: 'Verify digital identity across platforms' },
 
-  // Credit
-  { id: 'credit-1', name: 'CIBIL Score Fetch API', category: 'Credit', status: 'Live', docUrl: '#', description: 'Fetch consumer credit score and report' },
-  { id: 'credit-2', name: 'CRIF Report API', category: 'Credit', status: 'Live', docUrl: '#', description: 'Fetch CRIF credit report' },
-  { id: 'credit-3', name: 'Equifax Report API', category: 'Credit', status: 'Discontinued', docUrl: '#', description: 'Fetch Equifax credit report' },
+  // Utility
+  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
+  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Get location details from pincode' },
+  { id: 'util-3', name: 'Email Verification API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Validate email address deliverability' },
+  { id: 'util-4', name: 'OCR Document Parser API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Extract text and data from documents' },
 
-  // Employment
-  { id: 'emp-1', name: 'EPFO Verification API', category: 'Employment', status: 'Live', docUrl: '#', description: 'Verify employment via EPFO/UAN' },
-  { id: 'emp-2', name: 'ITR Verification API', category: 'Employment', status: 'Live', docUrl: '#', description: 'Fetch and verify income tax returns' },
-  { id: 'emp-3', name: 'Form 26AS API', category: 'Employment', status: 'Live', docUrl: '#', description: 'Fetch Form 26AS tax credit statement' },
+  // Fraud Check
+  { id: 'fraud-1', name: 'Bank Account Fraud Check API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Detect fraudulent bank accounts' },
+  { id: 'fraud-2', name: 'Device Fingerprint API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Identify devices for fraud prevention' },
+  { id: 'fraud-3', name: 'IP Risk Assessment API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Assess risk based on IP address' },
+  { id: 'fraud-4', name: 'UPI Fraud Detection API', category: 'Fraud Check', status: 'Discontinued', docUrl: '#', description: 'Detect suspicious UPI transactions' },
+
+  // Financial Check
+  { id: 'fin-1', name: 'CIBIL Score Fetch API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch consumer credit score and report' },
+  { id: 'fin-2', name: 'CRIF Report API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch CRIF credit report' },
+  { id: 'fin-3', name: 'Bank Statement Analysis API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Parse and analyze bank statements' },
+  { id: 'fin-4', name: 'ITR Verification API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch and verify income tax returns' },
+
+  // Vehicle Verification Live
+  { id: 'veh-1', name: 'RC Verification API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Verify vehicle registration certificate' },
+  { id: 'veh-2', name: 'Challan Check API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Check pending challans for a vehicle' },
+  { id: 'veh-3', name: 'Fastag Details API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Fetch Fastag linked vehicle details' },
+
+  // Profession Check
+  { id: 'prof-1', name: 'CA Membership Verification API', category: 'Profession Check', status: 'Live', docUrl: '#', description: 'Verify Chartered Accountant membership' },
+  { id: 'prof-2', name: 'Doctor Registration Check API', category: 'Profession Check', status: 'Live', docUrl: '#', description: 'Verify NMC/SMC doctor registration' },
+  { id: 'prof-3', name: 'Advocate Bar Council Check API', category: 'Profession Check', status: 'Discontinued', docUrl: '#', description: 'Verify advocate registration with Bar Council' },
+
+  // Miscellaneous
+  { id: 'misc-1', name: 'Ration Card Verification API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Verify ration card details' },
+  { id: 'misc-2', name: 'Court Case Search API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Search court case records by name/ID' },
+  { id: 'misc-3', name: 'Property Registration Check API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Verify property registration details' },
+
+  // Tampering Check
+  { id: 'tamp-1', name: 'Document Tampering Detection API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Detect tampering in uploaded documents' },
+  { id: 'tamp-2', name: 'Image Forensics API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Detect image manipulation and forgery' },
+  { id: 'tamp-3', name: 'QR Code Authenticity API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Verify authenticity of QR codes on documents' },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
   KYC: '🛡️',
   KYB: '🏢',
-  Utilities: '🔧',
-  Banking: '🏦',
-  Credit: '📊',
-  Employment: '💼',
+  'Mobile Number Lookup': '📱',
+  'Digital Footprint': '🌐',
+  Utility: '🔧',
+  'Fraud Check': '🚨',
+  'Financial Check': '📊',
+  'Vehicle Verification Live': '🚗',
+  'Profession Check': '👨‍⚕️',
+  Miscellaneous: '📋',
+  'Tampering Check': '🔍',
 };
+
+const CATEGORY_ORDER = [
+  'KYC', 'KYB', 'Mobile Number Lookup', 'Digital Footprint', 'Utility',
+  'Fraud Check', 'Financial Check', 'Vehicle Verification Live',
+  'Profession Check', 'Miscellaneous', 'Tampering Check',
+];
 
 export function APIDocsTab() {
   const [search, setSearch] = useState('');
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
@@ -86,16 +120,10 @@ export function APIDocsTab() {
       existing.push(api);
       map.set(api.category, existing);
     });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    return CATEGORY_ORDER
+      .filter(cat => map.has(cat))
+      .map(cat => [cat, map.get(cat)!] as [string, APIDoc[]]);
   }, [filtered]);
-
-  const toggleCategory = (cat: string) => {
-    setOpenCategories(prev => {
-      const next = new Set(prev);
-      next.has(cat) ? next.delete(cat) : next.add(cat);
-      return next;
-    });
-  };
 
   const totalLive = filtered.filter(a => a.status === 'Live').length;
   const totalDiscontinued = filtered.filter(a => a.status === 'Discontinued').length;
@@ -126,87 +154,74 @@ export function APIDocsTab() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="space-y-2">
+      {/* Categories — always open */}
+      <div className="space-y-3">
         {grouped.map(([category, apis]) => {
-          const isOpen = openCategories.has(category);
           const liveCount = apis.filter(a => a.status === 'Live').length;
 
           return (
-            <Collapsible key={category} open={isOpen} onOpenChange={() => toggleCategory(category)}>
-              <Card className="glass-card overflow-hidden">
-                <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{CATEGORY_ICONS[category] || '📄'}</span>
-                      <div>
-                        <p className="font-semibold text-sm">{category}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {apis.length} APIs · {liveCount} Live
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isOpen
-                        ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        : <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      }
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent>
-                  <div className="border-t border-border">
-                    {/* Table header */}
-                    <div className="grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-2 bg-muted/40 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <span>API Name</span>
-                      <span className="text-center">Status</span>
-                      <span className="text-center">Documentation</span>
-                    </div>
-
-                    {/* Table rows */}
-                    {apis.map((api, idx) => (
-                      <div
-                        key={api.id}
-                        className={cn(
-                          'grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
-                          idx < apis.length - 1 && 'border-b border-border/50'
-                        )}
-                      >
-                        <div>
-                          <p className="font-medium text-foreground">{api.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{api.description}</p>
-                        </div>
-                        <div className="flex justify-center">
-                          <Badge
-                            variant={api.status === 'Live' ? 'default' : 'destructive'}
-                            className={cn(
-                              'text-[10px] px-2',
-                              api.status === 'Live' && 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/25'
-                            )}
-                          >
-                            {api.status === 'Live' ? '● Live' : '● Discontinued'}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-center gap-1.5">
-                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" asChild>
-                            <a href={api.docUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-3 h-3" />
-                              View
-                            </a>
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground" asChild>
-                            <a href={api.docUrl} download>
-                              <Download className="w-3 h-3" />
-                            </a>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+            <Card key={category} className="glass-card overflow-hidden">
+              {/* Category header */}
+              <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{CATEGORY_ICONS[category] || '📄'}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{category}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {apis.length} APIs · {liveCount} Live
+                    </p>
                   </div>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </div>
+
+              {/* Table header */}
+              <div className="grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span>API Name</span>
+                <span className="text-center">Status</span>
+                <span className="text-center">Documentation</span>
+              </div>
+
+              {/* Table rows */}
+              {apis.map((api, idx) => (
+                <div
+                  key={api.id}
+                  className={cn(
+                    'grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
+                    idx < apis.length - 1 && 'border-b border-border/50'
+                  )}
+                >
+                  <div>
+                    <p className="font-medium text-foreground">{api.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{api.description}</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Badge
+                      variant={api.status === 'Live' ? 'default' : 'destructive'}
+                      className={cn(
+                        'text-[10px] px-2',
+                        api.status === 'Live' && 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/25'
+                      )}
+                    >
+                      {api.status === 'Live' ? '● Live' : '● Discontinued'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-center gap-1.5">
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" asChild>
+                      <a href={api.docUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-3 h-3" />
+                        View
+                      </a>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground" asChild>
+                      <a href={api.docUrl} download>
+                        <Download className="w-3 h-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </Card>
           );
         })}
 
