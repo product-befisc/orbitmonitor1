@@ -147,18 +147,50 @@ export function ZeroHitAPIsCard() {
               className="h-7 pl-7 text-[11px] bg-muted/40 border-border/50"
             />
           </div>
-          <Select value={volumeRange} onValueChange={(v) => setVolumeRange(v as VolumeRange)}>
-            <SelectTrigger className="h-7 w-[130px] text-[11px] bg-muted/40 border-border/50">
-              <SelectValue placeholder="Volume" />
-            </SelectTrigger>
-            <SelectContent>
-              {VOLUME_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="h-7 px-2 text-[11px] bg-muted/40 border-border/50 min-w-[120px] justify-between">
+                {volumeRange === 'custom' && customMin
+                  ? `${customMin} – ${customMax || '∞'}`
+                  : VOLUME_OPTIONS.find(o => o.value === volumeRange)?.label ?? 'Volume'}
+                <ChevronDown className="w-3 h-3 ml-1 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-1">
+                {VOLUME_OPTIONS.filter(o => o.value !== 'custom').map(opt => (
+                  <Button
+                    key={opt.value}
+                    variant={volumeRange === opt.value ? 'secondary' : 'ghost'}
+                    className="w-full justify-start text-xs h-7"
+                    onClick={() => { setVolumeRange(opt.value); setCustomMin(''); setCustomMax(''); }}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+                <div className="border-t border-border/50 pt-1 mt-1">
+                  <p className="text-[10px] text-muted-foreground px-2 mb-1">Custom Range</p>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={customMin}
+                      onChange={e => { setCustomMin(e.target.value); setVolumeRange('custom'); }}
+                      className="h-6 text-[11px] px-1.5"
+                    />
+                    <span className="text-[10px] text-muted-foreground">–</span>
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={customMax}
+                      onChange={e => { setCustomMax(e.target.value); setVolumeRange('custom'); }}
+                      className="h-6 text-[11px] px-1.5"
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <ToggleGroup
             type="single"
             value={timeRange}
