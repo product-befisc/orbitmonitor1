@@ -17,16 +17,16 @@ interface ZeroHitAPI {
 }
 
 const MOCK_ZERO_HIT_APIS: ZeroHitAPI[] = [
-  { client: 'TechCorp', apiName: 'Address Verify v2', onboardedDate: '2026-01-15', clientVolume: 245000 },
-  { client: 'TechCorp', apiName: 'Credit Score Pro', onboardedDate: '2026-02-20', clientVolume: 245000 },
-  { client: 'FinServe', apiName: 'PAN Validate', onboardedDate: '2025-12-10', clientVolume: 89000 },
-  { client: 'DataSync', apiName: 'GST Lookup', onboardedDate: '2026-03-01', clientVolume: 156000 },
-  { client: 'DataSync', apiName: 'Bank Statement Parse', onboardedDate: '2026-01-28', clientVolume: 156000 },
-  { client: 'CloudNest', apiName: 'eSign API', onboardedDate: '2026-02-14', clientVolume: 32000 },
-  { client: 'RetailMax', apiName: 'Aadhaar OTP', onboardedDate: '2025-11-22', clientVolume: 410000 },
-  { client: 'RetailMax', apiName: 'Digilocker Pull', onboardedDate: '2026-03-10', clientVolume: 410000 },
-  { client: 'RetailMax', apiName: 'CKYC Search', onboardedDate: '2026-01-05', clientVolume: 410000 },
-  { client: 'PayFlow', apiName: 'UPI Collect', onboardedDate: '2026-02-28', clientVolume: 12000 },
+  { client: 'TechCorp', apiName: 'Address Verify v2', onboardedDate: '2026-01-15', clientVolume: 150 },
+  { client: 'TechCorp', apiName: 'Credit Score Pro', onboardedDate: '2026-02-20', clientVolume: 150 },
+  { client: 'FinServe', apiName: 'PAN Validate', onboardedDate: '2025-12-10', clientVolume: 520 },
+  { client: 'DataSync', apiName: 'GST Lookup', onboardedDate: '2026-03-01', clientVolume: 3200 },
+  { client: 'DataSync', apiName: 'Bank Statement Parse', onboardedDate: '2026-01-28', clientVolume: 3200 },
+  { client: 'CloudNest', apiName: 'eSign API', onboardedDate: '2026-02-14', clientVolume: 75 },
+  { client: 'RetailMax', apiName: 'Aadhaar OTP', onboardedDate: '2025-11-22', clientVolume: 4800 },
+  { client: 'RetailMax', apiName: 'Digilocker Pull', onboardedDate: '2026-03-10', clientVolume: 4800 },
+  { client: 'RetailMax', apiName: 'CKYC Search', onboardedDate: '2026-01-05', clientVolume: 4800 },
+  { client: 'PayFlow', apiName: 'UPI Collect', onboardedDate: '2026-02-28', clientVolume: 350 },
 ];
 
 type TimeRange = '1m' | '3m' | '6m' | 'all';
