@@ -73,25 +73,26 @@ export function ZeroHitAPIsCard() {
   const [openClients, setOpenClients] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [volumeRange, setVolumeRange] = useState<VolumeRange>('all');
+  const [customMin, setCustomMin] = useState('');
+  const [customMax, setCustomMax] = useState('');
 
   const filtered = useMemo(() => {
+    const cMin = Number(customMin) || 0;
+    const cMax = Number(customMax) || 0;
     return MOCK_ZERO_HIT_APIS.filter(a => {
-      // search
       if (search) {
         const q = search.toLowerCase();
         if (!a.client.toLowerCase().includes(q) && !a.apiName.toLowerCase().includes(q)) return false;
       }
-      // time range
       if (timeRange !== 'all') {
         const months = timeRange === '1m' ? 1 : timeRange === '3m' ? 3 : 6;
         const cutoff = getMonthsAgo(months);
         if (new Date(a.onboardedDate) < cutoff) return false;
       }
-      // volume range
-      if (!matchesVolume(a.clientVolume, volumeRange)) return false;
+      if (!matchesVolume(a.clientVolume, volumeRange, cMin, cMax)) return false;
       return true;
     });
-  }, [search, timeRange, volumeRange]);
+  }, [search, timeRange, volumeRange, customMin, customMax]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ZeroHitAPI[]>();
