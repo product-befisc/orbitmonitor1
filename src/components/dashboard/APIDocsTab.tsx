@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 interface APIDoc {
@@ -102,7 +103,7 @@ const CATEGORY_ORDER = [
 
 export function APIDocsTab() {
   const [search, setSearch] = useState('');
-
+  const [viewingDoc, setViewingDoc] = useState<APIDoc | null>(null);
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
     const q = search.toLowerCase();
@@ -207,11 +208,9 @@ export function APIDocsTab() {
                     </Badge>
                   </div>
                   <div className="flex justify-center gap-1.5">
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" asChild>
-                      <a href={api.docUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3 h-3" />
-                        View
-                      </a>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" onClick={() => setViewingDoc(api)}>
+                      <ExternalLink className="w-3 h-3" />
+                      View
                     </Button>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground" asChild>
                       <a href={api.docUrl} download>
@@ -234,6 +233,52 @@ export function APIDocsTab() {
           </Card>
         )}
       </div>
+
+      {/* Doc Viewer Dialog */}
+      <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-3 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg">{viewingDoc?.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground mt-1">{viewingDoc?.description}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={viewingDoc?.status === 'Live' ? 'default' : 'destructive'}
+                  className={cn(
+                    'text-[10px] px-2',
+                    viewingDoc?.status === 'Live' && 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
+                  )}
+                >
+                  {viewingDoc?.status === 'Live' ? '● Live' : '● Discontinued'}
+                </Badge>
+                <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
+                  <a href={viewingDoc?.docUrl} download>
+                    <Download className="w-3 h-3" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto p-6">
+            <div className="bg-muted/30 rounded-lg border border-border p-8 h-full flex flex-col items-center justify-center text-center">
+              <FileText className="w-16 h-16 text-muted-foreground/50 mb-4" />
+              <p className="text-sm font-medium text-foreground mb-1">API Documentation</p>
+              <p className="text-xs text-muted-foreground max-w-md">
+                Documentation for <span className="font-medium">{viewingDoc?.name}</span> will be displayed here once document URLs are configured.
+              </p>
+              <Button variant="outline" size="sm" className="mt-4 gap-1.5 text-xs" asChild>
+                <a href={viewingDoc?.docUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3 h-3" />
+                  Open in new tab
+                </a>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
