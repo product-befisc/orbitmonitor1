@@ -103,7 +103,7 @@ const CATEGORY_ORDER = [
 
 export function APIDocsTab() {
   const [search, setSearch] = useState('');
-
+  const [viewingDoc, setViewingDoc] = useState<APIDoc | null>(null);
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
     const q = search.toLowerCase();
@@ -208,11 +208,9 @@ export function APIDocsTab() {
                     </Badge>
                   </div>
                   <div className="flex justify-center gap-1.5">
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" asChild>
-                      <a href={api.docUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3 h-3" />
-                        View
-                      </a>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" onClick={() => setViewingDoc(api)}>
+                      <ExternalLink className="w-3 h-3" />
+                      View
                     </Button>
                     <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground" asChild>
                       <a href={api.docUrl} download>
