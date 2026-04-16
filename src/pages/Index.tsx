@@ -14,9 +14,7 @@ import { DashboardHeader, type Environment, type DateRange } from '@/components/
 import { APIConsumptionChart, type StatusDayData } from '@/components/dashboard/APIConsumptionChart';
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
-import { VendorAPIsTab } from '@/components/dashboard/VendorAPIsTab';
-import { PercentileAnalysisTab } from '@/components/dashboard/PercentileAnalysisTab';
-import { SupportTicketsTab } from '@/components/dashboard/SupportTicketsTab';
+import { APIDocsTab } from '@/components/dashboard/APIDocsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
@@ -247,9 +245,7 @@ const Index = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
-          <TabsTrigger value="vendor-apis">Vendor APIs</TabsTrigger>
-          <TabsTrigger value="percentile">Percentile Analysis</TabsTrigger>
-          <TabsTrigger value="support-tickets">Support Tickets</TabsTrigger>
+          <TabsTrigger value="api-docs">API Docs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
@@ -347,16 +343,8 @@ const Index = () => {
           <ComparisonTab apis={filteredAPIs} />
         </TabsContent>
 
-        <TabsContent value="vendor-apis" className="mt-0">
-          <VendorAPIsTab apis={filteredAPIs} />
-        </TabsContent>
-
-        <TabsContent value="percentile" className="mt-0">
-          <PercentileAnalysisTab apis={filteredAPIs} />
-        </TabsContent>
-
-        <TabsContent value="support-tickets" className="mt-0">
-          <SupportTicketsTab globalFilters={globalFilters} />
+        <TabsContent value="api-docs" className="mt-0">
+          <APIDocsTab />
         </TabsContent>
       </Tabs>
     </div>
