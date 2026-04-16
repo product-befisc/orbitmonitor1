@@ -30,7 +30,7 @@ const MOCK_ZERO_HIT_APIS: ZeroHitAPI[] = [
 ];
 
 type TimeRange = '1m' | '3m' | '6m' | 'all';
-type VolumeRange = 'all' | '0-50k' | '50k-100k' | '100k-500k' | '500k+';
+type VolumeRange = 'all' | '0-200' | '200-800' | '1000-5000' | 'custom';
 
 const TIME_LABELS: Record<TimeRange, string> = {
   '1m': '1M',
@@ -41,10 +41,10 @@ const TIME_LABELS: Record<TimeRange, string> = {
 
 const VOLUME_OPTIONS: { value: VolumeRange; label: string }[] = [
   { value: 'all', label: 'All Volumes' },
-  { value: '0-50k', label: '0 – 50K' },
-  { value: '50k-100k', label: '50K – 100K' },
-  { value: '100k-500k', label: '100K – 500K' },
-  { value: '500k+', label: '500K+' },
+  { value: '0-200', label: '0 – 200' },
+  { value: '200-800', label: '200 – 800' },
+  { value: '1000-5000', label: '1K – 5K' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 const formatDate = (d: string) => {
@@ -58,13 +58,13 @@ const getMonthsAgo = (months: number) => {
   return d;
 };
 
-const matchesVolume = (volume: number, range: VolumeRange) => {
+const matchesVolume = (volume: number, range: VolumeRange, customMin: number, customMax: number) => {
   switch (range) {
     case 'all': return true;
-    case '0-50k': return volume <= 50000;
-    case '50k-100k': return volume > 50000 && volume <= 100000;
-    case '100k-500k': return volume > 100000 && volume <= 500000;
-    case '500k+': return volume > 500000;
+    case '0-200': return volume <= 200;
+    case '200-800': return volume > 200 && volume <= 800;
+    case '1000-5000': return volume >= 1000 && volume <= 5000;
+    case 'custom': return volume >= customMin && (customMax === 0 ? true : volume <= customMax);
   }
 };
 
