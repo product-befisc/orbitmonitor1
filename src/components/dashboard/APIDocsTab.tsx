@@ -39,69 +39,69 @@ const CURRENT_USER = 'analyst@befisc.com';
 
 const API_DOCS: APIDoc[] = [
   // Aadhaar APIs
-  { id: 'aad-1', name: 'Aadhaar Verification API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Aadhaar-based identity verification' },
-  { id: 'aad-2', name: 'Aadhaar OTP Validation API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Validate Aadhaar via OTP' },
-  { id: 'aad-3', name: 'Mobile to Aadhaar Link Check API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Check Aadhaar linkage with mobile number' },
-  { id: 'aad-4', name: 'Face Match API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'AI-powered face comparison and liveness' },
+  { id: 'aad-1', name: 'Aadhaar Verification API', category: 'Aadhaar APIs', subcategory: 'Identity Verification', sensitive: true, docUrl: '#', description: 'Aadhaar-based identity verification' },
+  { id: 'aad-2', name: 'Aadhaar OTP Validation API', category: 'Aadhaar APIs', subcategory: 'OTP & Authentication', sensitive: true, docUrl: '#', description: 'Validate Aadhaar via OTP' },
+  { id: 'aad-3', name: 'Mobile to Aadhaar Link Check API', category: 'Aadhaar APIs', subcategory: 'Linkage Checks', sensitive: true, docUrl: '#', description: 'Check Aadhaar linkage with mobile number' },
+  { id: 'aad-4', name: 'Face Match API', category: 'Aadhaar APIs', subcategory: 'Biometric & Face Match', sensitive: true, docUrl: '#', description: 'AI-powered face comparison and liveness' },
 
   // PAN APIs
-  { id: 'pan-1', name: 'PAN Verification API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Verify PAN card details in real-time' },
-  { id: 'pan-2', name: 'PAN to Aadhaar Link API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Check PAN-Aadhaar linkage status' },
-  { id: 'pan-3', name: 'PAN 360° Profile API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Comprehensive PAN holder profile' },
+  { id: 'pan-1', name: 'PAN Verification API', category: 'PAN APIs', subcategory: 'Verification', sensitive: true, docUrl: '#', description: 'Verify PAN card details in real-time' },
+  { id: 'pan-2', name: 'PAN to Aadhaar Link API', category: 'PAN APIs', subcategory: 'Linkage Checks', sensitive: true, docUrl: '#', description: 'Check PAN-Aadhaar linkage status' },
+  { id: 'pan-3', name: 'PAN 360° Profile API', category: 'PAN APIs', subcategory: 'Profile & Insights', sensitive: true, docUrl: '#', description: 'Comprehensive PAN holder profile' },
 
   // Government ID APIs
-  { id: 'gov-1', name: 'Voter ID Verification API', category: 'Government ID APIs', docUrl: '#', description: 'Verify Voter ID card details' },
-  { id: 'gov-2', name: 'Driving License Verification API', category: 'Government ID APIs', docUrl: '#', description: 'DL number verification and details fetch' },
-  { id: 'gov-3', name: 'Ration Card Verification API', category: 'Government ID APIs', docUrl: '#', description: 'Verify ration card details' },
+  { id: 'gov-1', name: 'Voter ID Verification API', category: 'Government ID APIs', subcategory: 'Voter ID', docUrl: '#', description: 'Verify Voter ID card details' },
+  { id: 'gov-2', name: 'Driving License Verification API', category: 'Government ID APIs', subcategory: 'Driving License', docUrl: '#', description: 'DL number verification and details fetch' },
+  { id: 'gov-3', name: 'Ration Card Verification API', category: 'Government ID APIs', subcategory: 'Ration Card', docUrl: '#', description: 'Verify ration card details' },
 
   // KYB
-  { id: 'kyb-1', name: 'GST Verification API', category: 'KYB', docUrl: '#', description: 'Verify GSTIN and fetch business details' },
-  { id: 'kyb-2', name: 'MCA Company Search API', category: 'KYB', docUrl: '#', description: 'Search and verify company details from MCA' },
-  { id: 'kyb-3', name: 'FSSAI License Verification API', category: 'KYB', docUrl: '#', description: 'Verify FSSAI license details' },
-  { id: 'kyb-4', name: 'UDYAM Registration API', category: 'KYB', docUrl: '#', description: 'Verify MSME Udyam registration' },
+  { id: 'kyb-1', name: 'GST Verification API', category: 'KYB', subcategory: 'GST', docUrl: '#', description: 'Verify GSTIN and fetch business details' },
+  { id: 'kyb-2', name: 'MCA Company Search API', category: 'KYB', subcategory: 'Company & Corporate', docUrl: '#', description: 'Search and verify company details from MCA' },
+  { id: 'kyb-3', name: 'FSSAI License Verification API', category: 'KYB', subcategory: 'Licenses & Registrations', docUrl: '#', description: 'Verify FSSAI license details' },
+  { id: 'kyb-4', name: 'UDYAM Registration API', category: 'KYB', subcategory: 'Licenses & Registrations', docUrl: '#', description: 'Verify MSME Udyam registration' },
 
   // Mobile Number Lookup
-  { id: 'mob-1', name: 'Mobile Number to Name API', category: 'Mobile Number Lookup', sensitive: true, docUrl: '#', description: 'Fetch name associated with a mobile number' },
-  { id: 'mob-2', name: 'Mobile Number Verification API', category: 'Mobile Number Lookup', docUrl: '#', description: 'Verify if a mobile number is active' },
+  { id: 'mob-1', name: 'Mobile Number to Name API', category: 'Mobile Number Lookup', subcategory: 'Identity Lookup', sensitive: true, docUrl: '#', description: 'Fetch name associated with a mobile number' },
+  { id: 'mob-2', name: 'Mobile Number Verification API', category: 'Mobile Number Lookup', subcategory: 'Verification', docUrl: '#', description: 'Verify if a mobile number is active' },
 
   // Digital Footprint
-  { id: 'df-1', name: 'Email Risk Score API', category: 'Digital Footprint', docUrl: '#', description: 'Assess risk score for email addresses' },
-  { id: 'df-2', name: 'Social Media Lookup API', category: 'Digital Footprint', sensitive: true, docUrl: '#', description: 'Lookup social media profiles from identifiers' },
+  { id: 'df-1', name: 'Email Risk Score API', category: 'Digital Footprint', subcategory: 'Email Intelligence', docUrl: '#', description: 'Assess risk score for email addresses' },
+  { id: 'df-2', name: 'Social Media Lookup API', category: 'Digital Footprint', subcategory: 'Social Profile Lookup', sensitive: true, docUrl: '#', description: 'Lookup social media profiles from identifiers' },
 
   // Utility
-  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utility', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
-  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utility', docUrl: '#', description: 'Get location details from pincode' },
-  { id: 'util-3', name: 'Email Verification API', category: 'Utility', docUrl: '#', description: 'Validate email address deliverability' },
-  { id: 'util-4', name: 'OCR Document Parser API', category: 'Utility', docUrl: '#', description: 'Extract text and data from documents' },
+  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utility', subcategory: 'Banking Utilities', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
+  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utility', subcategory: 'Location Utilities', docUrl: '#', description: 'Get location details from pincode' },
+  { id: 'util-3', name: 'Email Verification API', category: 'Utility', subcategory: 'Communication', docUrl: '#', description: 'Validate email address deliverability' },
+  { id: 'util-4', name: 'OCR Document Parser API', category: 'Utility', subcategory: 'Document Processing', docUrl: '#', description: 'Extract text and data from documents' },
 
   // Fraud Check
-  { id: 'fraud-1', name: 'Bank Account Fraud Check API', category: 'Fraud Check', sensitive: true, docUrl: '#', description: 'Detect fraudulent bank accounts' },
-  { id: 'fraud-2', name: 'Device Fingerprint API', category: 'Fraud Check', docUrl: '#', description: 'Identify devices for fraud prevention' },
-  { id: 'fraud-3', name: 'IP Risk Assessment API', category: 'Fraud Check', docUrl: '#', description: 'Assess risk based on IP address' },
+  { id: 'fraud-1', name: 'Bank Account Fraud Check API', category: 'Fraud Check', subcategory: 'Account Fraud', sensitive: true, docUrl: '#', description: 'Detect fraudulent bank accounts' },
+  { id: 'fraud-2', name: 'Device Fingerprint API', category: 'Fraud Check', subcategory: 'Device Intelligence', docUrl: '#', description: 'Identify devices for fraud prevention' },
+  { id: 'fraud-3', name: 'IP Risk Assessment API', category: 'Fraud Check', subcategory: 'Network & IP Risk', docUrl: '#', description: 'Assess risk based on IP address' },
 
   // Financial Check
-  { id: 'fin-1', name: 'CIBIL Score Fetch API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch consumer credit score and report' },
-  { id: 'fin-2', name: 'CRIF Report API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch CRIF credit report' },
-  { id: 'fin-3', name: 'Bank Statement Analysis API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Parse and analyze bank statements' },
-  { id: 'fin-4', name: 'ITR Verification API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch and verify income tax returns' },
+  { id: 'fin-1', name: 'CIBIL Score Fetch API', category: 'Financial Check', subcategory: 'Credit Bureau', sensitive: true, docUrl: '#', description: 'Fetch consumer credit score and report' },
+  { id: 'fin-2', name: 'CRIF Report API', category: 'Financial Check', subcategory: 'Credit Bureau', sensitive: true, docUrl: '#', description: 'Fetch CRIF credit report' },
+  { id: 'fin-3', name: 'Bank Statement Analysis API', category: 'Financial Check', subcategory: 'Banking Insights', sensitive: true, docUrl: '#', description: 'Parse and analyze bank statements' },
+  { id: 'fin-4', name: 'ITR Verification API', category: 'Financial Check', subcategory: 'Tax & Income', sensitive: true, docUrl: '#', description: 'Fetch and verify income tax returns' },
 
   // Vehicle Verification Live
-  { id: 'veh-1', name: 'RC Verification API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Verify vehicle registration certificate' },
-  { id: 'veh-2', name: 'Challan Check API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Check pending challans for a vehicle' },
-  { id: 'veh-3', name: 'Fastag Details API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Fetch Fastag linked vehicle details' },
+  { id: 'veh-1', name: 'RC Verification API', category: 'Vehicle Verification Live', subcategory: 'Registration', docUrl: '#', description: 'Verify vehicle registration certificate' },
+  { id: 'veh-2', name: 'Challan Check API', category: 'Vehicle Verification Live', subcategory: 'Compliance & Challans', docUrl: '#', description: 'Check pending challans for a vehicle' },
+  { id: 'veh-3', name: 'Fastag Details API', category: 'Vehicle Verification Live', subcategory: 'Tolls & Fastag', docUrl: '#', description: 'Fetch Fastag linked vehicle details' },
 
   // Profession Check
-  { id: 'prof-1', name: 'CA Membership Verification API', category: 'Profession Check', docUrl: '#', description: 'Verify Chartered Accountant membership' },
-  { id: 'prof-2', name: 'Doctor Registration Check API', category: 'Profession Check', docUrl: '#', description: 'Verify NMC/SMC doctor registration' },
+  { id: 'prof-1', name: 'CA Membership Verification API', category: 'Profession Check', subcategory: 'Finance Professionals', docUrl: '#', description: 'Verify Chartered Accountant membership' },
+  { id: 'prof-2', name: 'Doctor Registration Check API', category: 'Profession Check', subcategory: 'Medical Professionals', docUrl: '#', description: 'Verify NMC/SMC doctor registration' },
 
   // Miscellaneous
-  { id: 'misc-1', name: 'Court Case Search API', category: 'Miscellaneous', sensitive: true, docUrl: '#', description: 'Search court case records by name/ID' },
-  { id: 'misc-2', name: 'Property Registration Check API', category: 'Miscellaneous', docUrl: '#', description: 'Verify property registration details' },
+  { id: 'misc-1', name: 'Court Case Search API', category: 'Miscellaneous', subcategory: 'Legal Records', sensitive: true, docUrl: '#', description: 'Search court case records by name/ID' },
+  { id: 'misc-2', name: 'Property Registration Check API', category: 'Miscellaneous', subcategory: 'Property Records', docUrl: '#', description: 'Verify property registration details' },
 
   // Tampering Check
-  { id: 'tamp-1', name: 'Document Tampering Detection API', category: 'Tampering Check', docUrl: '#', description: 'Detect tampering in uploaded documents' },
-  { id: 'tamp-2', name: 'Image Forensics API', category: 'Tampering Check', docUrl: '#', description: 'Detect image manipulation and forgery' },
-  { id: 'tamp-3', name: 'QR Code Authenticity API', category: 'Tampering Check', docUrl: '#', description: 'Verify authenticity of QR codes on documents' },
+  { id: 'tamp-1', name: 'Document Tampering Detection API', category: 'Tampering Check', subcategory: 'Document Forensics', docUrl: '#', description: 'Detect tampering in uploaded documents' },
+  { id: 'tamp-2', name: 'Image Forensics API', category: 'Tampering Check', subcategory: 'Image Forensics', docUrl: '#', description: 'Detect image manipulation and forgery' },
+  { id: 'tamp-3', name: 'QR Code Authenticity API', category: 'Tampering Check', subcategory: 'QR & Barcode', docUrl: '#', description: 'Verify authenticity of QR codes on documents' },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
