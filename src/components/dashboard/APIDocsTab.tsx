@@ -235,9 +235,19 @@ export function APIDocsTab() {
       return;
     }
 
+    // If any selected APIs are sensitive, ask for confirmation first
+    const firstSensitive = API_DOCS.find(a => selectedApiIds.has(a.id) && a.sensitive);
+    if (firstSensitive) {
+      setPendingSensitive(firstSensitive);
+      return;
+    }
+
+    performShare();
+  };
+
+  const performShare = () => {
     const apiNames = API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => a.name);
 
-    // Check if a record to same email already exists - increment count
     const existingIdx = shareHistory.findIndex(r => r.sharedTo === recipientEmail);
     if (existingIdx >= 0) {
       const updated = [...shareHistory];
