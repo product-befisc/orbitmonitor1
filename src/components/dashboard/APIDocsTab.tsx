@@ -1,88 +1,112 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, X } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown, ShieldAlert, Share2, History, Mail, Send, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface APIDoc {
   id: string;
   name: string;
   category: string;
-  status: 'Live' | 'Discontinued';
+  sensitive?: boolean;
   docUrl: string;
   description: string;
 }
 
+interface ShareRecord {
+  id: string;
+  apiNames: string[];
+  sharedTo: string;
+  cc: string;
+  reason: string;
+  sharedBy: string;
+  sharedAt: string;
+  count: number;
+}
+
+const ADMIN_EMAIL = 'admin@befisc.com';
+const CURRENT_USER = 'analyst@befisc.com';
+
 const API_DOCS: APIDoc[] = [
-  // KYC
-  { id: 'kyc-1', name: 'PAN Verification API', category: 'KYC', status: 'Live', docUrl: '#', description: 'Verify PAN card details in real-time' },
-  { id: 'kyc-2', name: 'Aadhaar Verification API', category: 'KYC', status: 'Live', docUrl: '#', description: 'Aadhaar-based identity verification' },
-  { id: 'kyc-3', name: 'Voter ID Verification API', category: 'KYC', status: 'Live', docUrl: '#', description: 'Verify Voter ID card details' },
-  { id: 'kyc-4', name: 'Passport Verification API', category: 'KYC', status: 'Discontinued', docUrl: '#', description: 'Passport validation and verification' },
-  { id: 'kyc-5', name: 'Driving License Verification API', category: 'KYC', status: 'Live', docUrl: '#', description: 'DL number verification and details fetch' },
-  { id: 'kyc-6', name: 'Face Match API', category: 'KYC', status: 'Live', docUrl: '#', description: 'AI-powered face comparison and liveness' },
+  // Aadhaar APIs
+  { id: 'aad-1', name: 'Aadhaar Verification API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Aadhaar-based identity verification' },
+  { id: 'aad-2', name: 'Aadhaar OTP Validation API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Validate Aadhaar via OTP' },
+  { id: 'aad-3', name: 'Mobile to Aadhaar Link Check API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'Check Aadhaar linkage with mobile number' },
+  { id: 'aad-4', name: 'Face Match API', category: 'Aadhaar APIs', sensitive: true, docUrl: '#', description: 'AI-powered face comparison and liveness' },
+
+  // PAN APIs
+  { id: 'pan-1', name: 'PAN Verification API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Verify PAN card details in real-time' },
+  { id: 'pan-2', name: 'PAN to Aadhaar Link API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Check PAN-Aadhaar linkage status' },
+  { id: 'pan-3', name: 'PAN 360° Profile API', category: 'PAN APIs', sensitive: true, docUrl: '#', description: 'Comprehensive PAN holder profile' },
+
+  // Government ID APIs
+  { id: 'gov-1', name: 'Voter ID Verification API', category: 'Government ID APIs', docUrl: '#', description: 'Verify Voter ID card details' },
+  { id: 'gov-2', name: 'Driving License Verification API', category: 'Government ID APIs', docUrl: '#', description: 'DL number verification and details fetch' },
+  { id: 'gov-3', name: 'Ration Card Verification API', category: 'Government ID APIs', docUrl: '#', description: 'Verify ration card details' },
 
   // KYB
-  { id: 'kyb-1', name: 'GST Verification API', category: 'KYB', status: 'Live', docUrl: '#', description: 'Verify GSTIN and fetch business details' },
-  { id: 'kyb-2', name: 'MCA Company Search API', category: 'KYB', status: 'Live', docUrl: '#', description: 'Search and verify company details from MCA' },
-  { id: 'kyb-3', name: 'FSSAI License Verification API', category: 'KYB', status: 'Live', docUrl: '#', description: 'Verify FSSAI license details' },
-  { id: 'kyb-4', name: 'Shop & Establishment API', category: 'KYB', status: 'Discontinued', docUrl: '#', description: 'Verify shop and establishment registration' },
-  { id: 'kyb-5', name: 'UDYAM Registration API', category: 'KYB', status: 'Live', docUrl: '#', description: 'Verify MSME Udyam registration' },
+  { id: 'kyb-1', name: 'GST Verification API', category: 'KYB', docUrl: '#', description: 'Verify GSTIN and fetch business details' },
+  { id: 'kyb-2', name: 'MCA Company Search API', category: 'KYB', docUrl: '#', description: 'Search and verify company details from MCA' },
+  { id: 'kyb-3', name: 'FSSAI License Verification API', category: 'KYB', docUrl: '#', description: 'Verify FSSAI license details' },
+  { id: 'kyb-4', name: 'UDYAM Registration API', category: 'KYB', docUrl: '#', description: 'Verify MSME Udyam registration' },
 
   // Mobile Number Lookup
-  { id: 'mob-1', name: 'Mobile Number to Name API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Fetch name associated with a mobile number' },
-  { id: 'mob-2', name: 'Mobile Number Verification API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Verify if a mobile number is active' },
-  { id: 'mob-3', name: 'Mobile to Aadhaar Link Check API', category: 'Mobile Number Lookup', status: 'Live', docUrl: '#', description: 'Check Aadhaar linkage with mobile number' },
+  { id: 'mob-1', name: 'Mobile Number to Name API', category: 'Mobile Number Lookup', sensitive: true, docUrl: '#', description: 'Fetch name associated with a mobile number' },
+  { id: 'mob-2', name: 'Mobile Number Verification API', category: 'Mobile Number Lookup', docUrl: '#', description: 'Verify if a mobile number is active' },
 
   // Digital Footprint
-  { id: 'df-1', name: 'Email Risk Score API', category: 'Digital Footprint', status: 'Live', docUrl: '#', description: 'Assess risk score for email addresses' },
-  { id: 'df-2', name: 'Social Media Lookup API', category: 'Digital Footprint', status: 'Live', docUrl: '#', description: 'Lookup social media profiles from identifiers' },
-  { id: 'df-3', name: 'Digital Identity Verification API', category: 'Digital Footprint', status: 'Discontinued', docUrl: '#', description: 'Verify digital identity across platforms' },
+  { id: 'df-1', name: 'Email Risk Score API', category: 'Digital Footprint', docUrl: '#', description: 'Assess risk score for email addresses' },
+  { id: 'df-2', name: 'Social Media Lookup API', category: 'Digital Footprint', sensitive: true, docUrl: '#', description: 'Lookup social media profiles from identifiers' },
 
   // Utility
-  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
-  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Get location details from pincode' },
-  { id: 'util-3', name: 'Email Verification API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Validate email address deliverability' },
-  { id: 'util-4', name: 'OCR Document Parser API', category: 'Utility', status: 'Live', docUrl: '#', description: 'Extract text and data from documents' },
+  { id: 'util-1', name: 'IFSC Code Lookup API', category: 'Utility', docUrl: '#', description: 'Fetch bank branch details by IFSC code' },
+  { id: 'util-2', name: 'Pincode Lookup API', category: 'Utility', docUrl: '#', description: 'Get location details from pincode' },
+  { id: 'util-3', name: 'Email Verification API', category: 'Utility', docUrl: '#', description: 'Validate email address deliverability' },
+  { id: 'util-4', name: 'OCR Document Parser API', category: 'Utility', docUrl: '#', description: 'Extract text and data from documents' },
 
   // Fraud Check
-  { id: 'fraud-1', name: 'Bank Account Fraud Check API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Detect fraudulent bank accounts' },
-  { id: 'fraud-2', name: 'Device Fingerprint API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Identify devices for fraud prevention' },
-  { id: 'fraud-3', name: 'IP Risk Assessment API', category: 'Fraud Check', status: 'Live', docUrl: '#', description: 'Assess risk based on IP address' },
-  { id: 'fraud-4', name: 'UPI Fraud Detection API', category: 'Fraud Check', status: 'Discontinued', docUrl: '#', description: 'Detect suspicious UPI transactions' },
+  { id: 'fraud-1', name: 'Bank Account Fraud Check API', category: 'Fraud Check', sensitive: true, docUrl: '#', description: 'Detect fraudulent bank accounts' },
+  { id: 'fraud-2', name: 'Device Fingerprint API', category: 'Fraud Check', docUrl: '#', description: 'Identify devices for fraud prevention' },
+  { id: 'fraud-3', name: 'IP Risk Assessment API', category: 'Fraud Check', docUrl: '#', description: 'Assess risk based on IP address' },
 
   // Financial Check
-  { id: 'fin-1', name: 'CIBIL Score Fetch API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch consumer credit score and report' },
-  { id: 'fin-2', name: 'CRIF Report API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch CRIF credit report' },
-  { id: 'fin-3', name: 'Bank Statement Analysis API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Parse and analyze bank statements' },
-  { id: 'fin-4', name: 'ITR Verification API', category: 'Financial Check', status: 'Live', docUrl: '#', description: 'Fetch and verify income tax returns' },
+  { id: 'fin-1', name: 'CIBIL Score Fetch API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch consumer credit score and report' },
+  { id: 'fin-2', name: 'CRIF Report API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch CRIF credit report' },
+  { id: 'fin-3', name: 'Bank Statement Analysis API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Parse and analyze bank statements' },
+  { id: 'fin-4', name: 'ITR Verification API', category: 'Financial Check', sensitive: true, docUrl: '#', description: 'Fetch and verify income tax returns' },
 
   // Vehicle Verification Live
-  { id: 'veh-1', name: 'RC Verification API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Verify vehicle registration certificate' },
-  { id: 'veh-2', name: 'Challan Check API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Check pending challans for a vehicle' },
-  { id: 'veh-3', name: 'Fastag Details API', category: 'Vehicle Verification Live', status: 'Live', docUrl: '#', description: 'Fetch Fastag linked vehicle details' },
+  { id: 'veh-1', name: 'RC Verification API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Verify vehicle registration certificate' },
+  { id: 'veh-2', name: 'Challan Check API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Check pending challans for a vehicle' },
+  { id: 'veh-3', name: 'Fastag Details API', category: 'Vehicle Verification Live', docUrl: '#', description: 'Fetch Fastag linked vehicle details' },
 
   // Profession Check
-  { id: 'prof-1', name: 'CA Membership Verification API', category: 'Profession Check', status: 'Live', docUrl: '#', description: 'Verify Chartered Accountant membership' },
-  { id: 'prof-2', name: 'Doctor Registration Check API', category: 'Profession Check', status: 'Live', docUrl: '#', description: 'Verify NMC/SMC doctor registration' },
-  { id: 'prof-3', name: 'Advocate Bar Council Check API', category: 'Profession Check', status: 'Discontinued', docUrl: '#', description: 'Verify advocate registration with Bar Council' },
+  { id: 'prof-1', name: 'CA Membership Verification API', category: 'Profession Check', docUrl: '#', description: 'Verify Chartered Accountant membership' },
+  { id: 'prof-2', name: 'Doctor Registration Check API', category: 'Profession Check', docUrl: '#', description: 'Verify NMC/SMC doctor registration' },
 
   // Miscellaneous
-  { id: 'misc-1', name: 'Ration Card Verification API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Verify ration card details' },
-  { id: 'misc-2', name: 'Court Case Search API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Search court case records by name/ID' },
-  { id: 'misc-3', name: 'Property Registration Check API', category: 'Miscellaneous', status: 'Live', docUrl: '#', description: 'Verify property registration details' },
+  { id: 'misc-1', name: 'Court Case Search API', category: 'Miscellaneous', sensitive: true, docUrl: '#', description: 'Search court case records by name/ID' },
+  { id: 'misc-2', name: 'Property Registration Check API', category: 'Miscellaneous', docUrl: '#', description: 'Verify property registration details' },
 
   // Tampering Check
-  { id: 'tamp-1', name: 'Document Tampering Detection API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Detect tampering in uploaded documents' },
-  { id: 'tamp-2', name: 'Image Forensics API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Detect image manipulation and forgery' },
-  { id: 'tamp-3', name: 'QR Code Authenticity API', category: 'Tampering Check', status: 'Live', docUrl: '#', description: 'Verify authenticity of QR codes on documents' },
+  { id: 'tamp-1', name: 'Document Tampering Detection API', category: 'Tampering Check', docUrl: '#', description: 'Detect tampering in uploaded documents' },
+  { id: 'tamp-2', name: 'Image Forensics API', category: 'Tampering Check', docUrl: '#', description: 'Detect image manipulation and forgery' },
+  { id: 'tamp-3', name: 'QR Code Authenticity API', category: 'Tampering Check', docUrl: '#', description: 'Verify authenticity of QR codes on documents' },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
-  KYC: '🛡️',
+  'Aadhaar APIs': '🆔',
+  'PAN APIs': '💳',
+  'Government ID APIs': '🪪',
   KYB: '🏢',
   'Mobile Number Lookup': '📱',
   'Digital Footprint': '🌐',
@@ -96,14 +120,49 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CATEGORY_ORDER = [
-  'KYC', 'KYB', 'Mobile Number Lookup', 'Digital Footprint', 'Utility',
+  'Aadhaar APIs', 'PAN APIs', 'Government ID APIs', 'KYB',
+  'Mobile Number Lookup', 'Digital Footprint', 'Utility',
   'Fraud Check', 'Financial Check', 'Vehicle Verification Live',
   'Profession Check', 'Miscellaneous', 'Tampering Check',
 ];
 
+// Mock initial share history
+const INITIAL_SHARE_HISTORY: ShareRecord[] = [
+  {
+    id: 's1',
+    apiNames: ['PAN Verification API', 'Aadhaar Verification API'],
+    sharedTo: 'partner@acme.com',
+    cc: ADMIN_EMAIL,
+    reason: 'Onboarding documentation for new client integration',
+    sharedBy: 'analyst@befisc.com',
+    sharedAt: '2025-04-12 14:23',
+    count: 3,
+  },
+  {
+    id: 's2',
+    apiNames: ['GST Verification API'],
+    sharedTo: 'devteam@fintech.io',
+    cc: ADMIN_EMAIL,
+    reason: 'Technical evaluation',
+    sharedBy: 'analyst@befisc.com',
+    sharedAt: '2025-04-10 09:15',
+    count: 1,
+  },
+];
+
 export function APIDocsTab() {
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [viewingDoc, setViewingDoc] = useState<APIDoc | null>(null);
+  const [pendingSensitive, setPendingSensitive] = useState<APIDoc | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareHistory, setShareHistory] = useState<ShareRecord[]>(INITIAL_SHARE_HISTORY);
+
+  // Share form state
+  const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [shareReason, setShareReason] = useState('');
+
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
     const q = search.toLowerCase();
@@ -126,89 +185,184 @@ export function APIDocsTab() {
       .map(cat => [cat, map.get(cat)!] as [string, APIDoc[]]);
   }, [filtered]);
 
-  const totalLive = filtered.filter(a => a.status === 'Live').length;
-  const totalDiscontinued = filtered.filter(a => a.status === 'Discontinued').length;
+  const sensitiveCount = filtered.filter(a => a.sensitive).length;
+
+  const handleViewClick = (api: APIDoc) => {
+    if (api.sensitive) {
+      setPendingSensitive(api);
+    } else {
+      setViewingDoc(api);
+    }
+  };
+
+  const confirmSensitive = () => {
+    if (pendingSensitive) {
+      setViewingDoc(pendingSensitive);
+      setPendingSensitive(null);
+    }
+  };
+
+  const toggleApiSelection = (id: string) => {
+    setSelectedApiIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const resetShareForm = () => {
+    setSelectedApiIds(new Set());
+    setRecipientEmail('');
+    setShareReason('');
+  };
+
+  const handleShareSubmit = () => {
+    if (selectedApiIds.size === 0) {
+      toast({ title: 'No APIs selected', description: 'Please select at least one API to share.', variant: 'destructive' });
+      return;
+    }
+    if (!recipientEmail || !/\S+@\S+\.\S+/.test(recipientEmail)) {
+      toast({ title: 'Invalid email', description: 'Please enter a valid recipient email.', variant: 'destructive' });
+      return;
+    }
+
+    const apiNames = API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => a.name);
+
+    // Check if a record to same email already exists - increment count
+    const existingIdx = shareHistory.findIndex(r => r.sharedTo === recipientEmail);
+    if (existingIdx >= 0) {
+      const updated = [...shareHistory];
+      updated[existingIdx] = {
+        ...updated[existingIdx],
+        count: updated[existingIdx].count + 1,
+        apiNames,
+        reason: shareReason || updated[existingIdx].reason,
+        sharedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      };
+      setShareHistory(updated);
+    } else {
+      setShareHistory(prev => [
+        {
+          id: `s${Date.now()}`,
+          apiNames,
+          sharedTo: recipientEmail,
+          cc: ADMIN_EMAIL,
+          reason: shareReason,
+          sharedBy: CURRENT_USER,
+          sharedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+          count: 1,
+        },
+        ...prev,
+      ]);
+    }
+
+    toast({
+      title: 'Documentation shared',
+      description: `Sent ${apiNames.length} API doc(s) to ${recipientEmail} (CC: ${ADMIN_EMAIL})`,
+    });
+    resetShareForm();
+  };
 
   return (
     <div className="space-y-4">
-      {/* Summary + Search */}
+      {/* Summary + Search + Share */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Badge variant="outline" className="text-xs px-3 py-1">
             {filtered.length} APIs
           </Badge>
           <Badge className="text-xs px-3 py-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">
-            {totalLive} Live
+            All Live
           </Badge>
-          <Badge variant="destructive" className="text-xs px-3 py-1 opacity-80">
-            {totalDiscontinued} Discontinued
-          </Badge>
+          {sensitiveCount > 0 && (
+            <Badge className="text-xs px-3 py-1 bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20 gap-1">
+              <ShieldAlert className="w-3 h-3" />
+              {sensitiveCount} Sensitive
+            </Badge>
+          )}
         </div>
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search APIs by name, category..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search APIs by name, category..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5"
+            onClick={() => setShareOpen(true)}
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
         </div>
       </div>
 
       {/* Categories — always open */}
       <div className="space-y-3">
         {grouped.map(([category, apis]) => {
-          const liveCount = apis.filter(a => a.status === 'Live').length;
-
+          const sensitiveInCat = apis.filter(a => a.sensitive).length;
           return (
             <Card key={category} className="glass-card overflow-hidden">
-              {/* Category header */}
               <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{CATEGORY_ICONS[category] || '📄'}</span>
                   <div>
                     <p className="font-semibold text-sm">{category}</p>
                     <p className="text-xs text-muted-foreground">
-                      {apis.length} APIs · {liveCount} Live
+                      {apis.length} APIs{sensitiveInCat > 0 && ` · ${sensitiveInCat} Sensitive`}
                     </p>
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </div>
 
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="grid grid-cols-[1fr_120px_140px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <span>API Name</span>
-                <span className="text-center">Status</span>
+                <span className="text-center">Sensitivity</span>
                 <span className="text-center">Documentation</span>
               </div>
 
-              {/* Table rows */}
               {apis.map((api, idx) => (
                 <div
                   key={api.id}
                   className={cn(
-                    'grid grid-cols-[1fr_100px_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
+                    'grid grid-cols-[1fr_120px_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
                     idx < apis.length - 1 && 'border-b border-border/50'
                   )}
                 >
                   <div>
-                    <p className="font-medium text-foreground">{api.name}</p>
+                    <p className="font-medium text-foreground flex items-center gap-1.5">
+                      {api.name}
+                      {api.sensitive && <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">{api.description}</p>
                   </div>
                   <div className="flex justify-center">
-                    <Badge
-                      variant={api.status === 'Live' ? 'default' : 'destructive'}
-                      className={cn(
-                        'text-[10px] px-2',
-                        api.status === 'Live' && 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/25'
-                      )}
-                    >
-                      {api.status === 'Live' ? '● Live' : '● Discontinued'}
-                    </Badge>
+                    {api.sensitive ? (
+                      <Badge className="text-[10px] px-2 bg-amber-500/15 text-amber-600 border-amber-500/30 hover:bg-amber-500/25 gap-1">
+                        <ShieldAlert className="w-3 h-3" />
+                        Sensitive
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] px-2 text-muted-foreground">
+                        Standard
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex justify-center gap-1.5">
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary" onClick={() => setViewingDoc(api)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs text-primary"
+                      onClick={() => handleViewClick(api)}
+                    >
                       <ExternalLink className="w-3 h-3" />
                       View
                     </Button>
@@ -234,25 +388,50 @@ export function APIDocsTab() {
         )}
       </div>
 
+      {/* Sensitive API Warning Dialog */}
+      <Dialog open={!!pendingSensitive} onOpenChange={(open) => !open && setPendingSensitive(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center">
+                <ShieldAlert className="w-5 h-5 text-amber-500" />
+              </div>
+              <DialogTitle>Sensitive API Access</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2 text-sm">
+              <span className="font-medium text-foreground">{pendingSensitive?.name}</span> is a sensitive API and requires permission. Do you want to proceed?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPendingSensitive(null)}>
+              No
+            </Button>
+            <Button onClick={confirmSensitive} className="bg-amber-500 hover:bg-amber-600 text-white">
+              Yes, proceed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Doc Viewer Dialog */}
       <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
         <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
           <DialogHeader className="p-6 pb-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg">{viewingDoc?.name}</DialogTitle>
+                <DialogTitle className="text-lg flex items-center gap-2">
+                  {viewingDoc?.name}
+                  {viewingDoc?.sensitive && <ShieldAlert className="w-4 h-4 text-amber-500" />}
+                </DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">{viewingDoc?.description}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={viewingDoc?.status === 'Live' ? 'default' : 'destructive'}
-                  className={cn(
-                    'text-[10px] px-2',
-                    viewingDoc?.status === 'Live' && 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
-                  )}
-                >
-                  {viewingDoc?.status === 'Live' ? '● Live' : '● Discontinued'}
-                </Badge>
+              <div className="flex items-center gap-2 mr-8">
+                {viewingDoc?.sensitive && (
+                  <Badge className="text-[10px] px-2 bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
+                    <ShieldAlert className="w-3 h-3" />
+                    Sensitive
+                  </Badge>
+                )}
                 <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
                   <a href={viewingDoc?.docUrl} download>
                     <Download className="w-3 h-3" />
@@ -277,6 +456,156 @@ export function APIDocsTab() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={shareOpen} onOpenChange={(open) => { setShareOpen(open); if (!open) resetShareForm(); }}>
+        <DialogContent className="max-w-2xl h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-3 border-b border-border">
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-4 h-4" />
+              Share API Documentation
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Send selected API docs to a recipient. Admin is automatically added in CC.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="share" className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-6 pt-3">
+              <TabsList className="grid w-full grid-cols-2 h-9">
+                <TabsTrigger value="share" className="text-xs gap-1.5">
+                  <Send className="w-3.5 h-3.5" /> Share
+                </TabsTrigger>
+                <TabsTrigger value="history" className="text-xs gap-1.5">
+                  <History className="w-3.5 h-3.5" /> History (Admin)
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="share" className="flex-1 overflow-hidden flex flex-col mt-3 px-6 pb-6 data-[state=inactive]:hidden">
+              <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                <div>
+                  <Label className="text-xs font-medium mb-1.5 block">
+                    Select APIs ({selectedApiIds.size} selected)
+                  </Label>
+                  <ScrollArea className="h-[240px] border border-border rounded-md p-2">
+                    {CATEGORY_ORDER.filter(c => API_DOCS.some(a => a.category === c)).map(cat => (
+                      <div key={cat} className="mb-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
+                          {cat}
+                        </p>
+                        {API_DOCS.filter(a => a.category === cat).map(api => (
+                          <label
+                            key={api.id}
+                            className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/40 rounded cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={selectedApiIds.has(api.id)}
+                              onCheckedChange={() => toggleApiSelection(api.id)}
+                            />
+                            <span className="text-sm flex-1">{api.name}</span>
+                            {api.sensitive && (
+                              <ShieldAlert className="w-3 h-3 text-amber-500" />
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="recipient" className="text-xs font-medium mb-1.5 block">
+                      Recipient Email <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="recipient"
+                      type="email"
+                      placeholder="recipient@example.com"
+                      value={recipientEmail}
+                      onChange={e => setRecipientEmail(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium mb-1.5 block">CC (auto)</Label>
+                    <div className="h-9 px-3 rounded-md border border-border bg-muted/40 flex items-center text-sm text-muted-foreground gap-1.5">
+                      <Mail className="w-3.5 h-3.5" />
+                      {ADMIN_EMAIL}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="reason" className="text-xs font-medium mb-1.5 block">
+                    Reason for sharing (optional)
+                  </Label>
+                  <Textarea
+                    id="reason"
+                    placeholder="e.g., Onboarding documentation request"
+                    value={shareReason}
+                    onChange={e => setShareReason(e.target.value)}
+                    className="text-sm min-h-[60px]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border mt-3">
+                <Button variant="outline" onClick={() => { setShareOpen(false); resetShareForm(); }}>
+                  Cancel
+                </Button>
+                <Button onClick={handleShareSubmit} className="gap-1.5">
+                  <Send className="w-3.5 h-3.5" />
+                  Share Documentation
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="history" className="flex-1 overflow-hidden mt-3 px-6 pb-6 data-[state=inactive]:hidden">
+              <ScrollArea className="h-full">
+                <div className="space-y-2 pr-3">
+                  {shareHistory.length === 0 && (
+                    <div className="text-center py-8 text-sm text-muted-foreground">
+                      No share history yet.
+                    </div>
+                  )}
+                  {shareHistory.map(record => (
+                    <Card key={record.id} className="p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <p className="text-sm font-medium truncate">{record.sharedTo}</p>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0">
+                              {record.count}× shared
+                            </Badge>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            CC: {record.cc} · By {record.sharedBy} · {record.sharedAt}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {record.apiNames.map(name => (
+                          <Badge key={name} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                      {record.reason && (
+                        <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
+                          "{record.reason}"
+                        </p>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
