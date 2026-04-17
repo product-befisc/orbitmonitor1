@@ -422,19 +422,10 @@ export function APIDocsTab() {
           <DialogHeader className="p-6 pb-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg flex items-center gap-2">
-                  {viewingDoc?.name}
-                  {viewingDoc?.sensitive && <ShieldAlert className="w-4 h-4 text-amber-500" />}
-                </DialogTitle>
+                <DialogTitle className="text-lg">{viewingDoc?.name}</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">{viewingDoc?.description}</p>
               </div>
               <div className="flex items-center gap-2 mr-8">
-                {viewingDoc?.sensitive && (
-                  <Badge className="text-[10px] px-2 bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
-                    <ShieldAlert className="w-3 h-3" />
-                    Sensitive
-                  </Badge>
-                )}
                 <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
                   <a href={viewingDoc?.docUrl} download>
                     <Download className="w-3 h-3" />
