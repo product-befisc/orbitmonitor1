@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, ShieldAlert, Share2, History, Mail, Send, X } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -158,6 +158,16 @@ export function APIDocsTab() {
   const [pendingSensitive, setPendingSensitive] = useState<APIDoc | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareHistory, setShareHistory] = useState<ShareRecord[]>(INITIAL_SHARE_HISTORY);
+  const [collapsedSubs, setCollapsedSubs] = useState<Set<string>>(new Set());
+
+  const toggleSubcategory = (key: string) => {
+    setCollapsedSubs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   // Share form state
   const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
