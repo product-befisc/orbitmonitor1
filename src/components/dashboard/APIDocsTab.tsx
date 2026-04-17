@@ -172,7 +172,7 @@ export function APIDocsTab() {
   // Share form state
   const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
   const [recipientEmail, setRecipientEmail] = useState('');
-  const [shareReason, setShareReason] = useState('');
+  const [emailBody, setEmailBody] = useState('');
   const [shareSearch, setShareSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -223,7 +223,7 @@ export function APIDocsTab() {
   const resetShareForm = () => {
     setSelectedApiIds(new Set());
     setRecipientEmail('');
-    setShareReason('');
+    setEmailBody('');
     setShareSearch('');
   };
 
@@ -257,7 +257,7 @@ export function APIDocsTab() {
         ...updated[existingIdx],
         count: updated[existingIdx].count + 1,
         apiNames,
-        reason: shareReason || updated[existingIdx].reason,
+        reason: emailBody || updated[existingIdx].reason,
         sharedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
       };
       setShareHistory(updated);
@@ -268,7 +268,7 @@ export function APIDocsTab() {
           apiNames,
           sharedTo: recipientEmail,
           cc: ADMIN_EMAIL,
-          reason: shareReason,
+          reason: emailBody,
           sharedBy: CURRENT_USER,
           sharedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
           count: 1,
@@ -564,15 +564,15 @@ export function APIDocsTab() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reason" className="text-xs font-medium mb-1.5 block">
-                    Reason for sharing (optional)
+                  <Label htmlFor="emailBody" className="text-xs font-medium mb-1.5 block">
+                    Email body
                   </Label>
                   <Textarea
-                    id="reason"
-                    placeholder="e.g., Onboarding documentation request"
-                    value={shareReason}
-                    onChange={e => setShareReason(e.target.value)}
-                    className="text-sm min-h-[60px]"
+                    id="emailBody"
+                    placeholder={"Hi Rajesh,\n\nPlease find the APIs doc as requested."}
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    className="text-sm min-h-[100px]"
                   />
                 </div>
               </div>
