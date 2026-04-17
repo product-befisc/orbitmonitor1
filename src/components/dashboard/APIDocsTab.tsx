@@ -196,21 +196,18 @@ export function APIDocsTab() {
       .map(cat => [cat, map.get(cat)!] as [string, APIDoc[]]);
   }, [filtered]);
 
-  const sensitiveCount = filtered.filter(a => a.sensitive).length;
-
   const handleViewClick = (api: APIDoc) => {
-    if (api.sensitive) {
-      setPendingSensitive(api);
-    } else {
-      setViewingDoc(api);
-    }
+    setViewingDoc(api);
   };
 
-  const confirmSensitive = () => {
-    if (pendingSensitive) {
-      setViewingDoc(pendingSensitive);
-      setPendingSensitive(null);
-    }
+  const selectedSensitiveApis = useMemo(
+    () => API_DOCS.filter(a => selectedApiIds.has(a.id) && a.sensitive),
+    [selectedApiIds]
+  );
+
+  const confirmSensitiveShare = () => {
+    setPendingSensitive(null);
+    performShare();
   };
 
   const toggleApiSelection = (id: string) => {
@@ -238,9 +235,19 @@ export function APIDocsTab() {
       return;
     }
 
+    // If any selected APIs are sensitive, ask for confirmation first
+    const firstSensitive = API_DOCS.find(a => selectedApiIds.has(a.id) && a.sensitive);
+    if (firstSensitive) {
+      setPendingSensitive(firstSensitive);
+      return;
+    }
+
+    performShare();
+  };
+
+  const performShare = () => {
     const apiNames = API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => a.name);
 
-    // Check if a record to same email already exists - increment count
     const existingIdx = shareHistory.findIndex(r => r.sharedTo === recipientEmail);
     if (existingIdx >= 0) {
       const updated = [...shareHistory];
@@ -286,12 +293,6 @@ export function APIDocsTab() {
           <Badge className="text-xs px-3 py-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">
             All Live
           </Badge>
-          {sensitiveCount > 0 && (
-            <Badge className="text-xs px-3 py-1 bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20 gap-1">
-              <ShieldAlert className="w-3 h-3" />
-              {sensitiveCount} Sensitive
-            </Badge>
-          )}
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-80">
@@ -318,7 +319,6 @@ export function APIDocsTab() {
       {/* Categories — always open */}
       <div className="space-y-3">
         {grouped.map(([category, apis]) => {
-          const sensitiveInCat = apis.filter(a => a.sensitive).length;
           return (
             <Card key={category} className="glass-card overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
@@ -327,16 +327,15 @@ export function APIDocsTab() {
                   <div>
                     <p className="font-semibold text-sm">{category}</p>
                     <p className="text-xs text-muted-foreground">
-                      {apis.length} APIs{sensitiveInCat > 0 && ` · ${sensitiveInCat} Sensitive`}
+                      {apis.length} APIs
                     </p>
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </div>
 
-              <div className="grid grid-cols-[1fr_120px_140px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="grid grid-cols-[1fr_140px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 <span>API Name</span>
-                <span className="text-center">Sensitivity</span>
                 <span className="text-center">Documentation</span>
               </div>
 
@@ -344,28 +343,13 @@ export function APIDocsTab() {
                 <div
                   key={api.id}
                   className={cn(
-                    'grid grid-cols-[1fr_120px_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
+                    'grid grid-cols-[1fr_140px] gap-2 px-4 py-3 items-center text-sm transition-colors hover:bg-muted/20',
                     idx < apis.length - 1 && 'border-b border-border/50'
                   )}
                 >
                   <div>
-                    <p className="font-medium text-foreground flex items-center gap-1.5">
-                      {api.name}
-                      {api.sensitive && <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />}
-                    </p>
+                    <p className="font-medium text-foreground">{api.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{api.description}</p>
-                  </div>
-                  <div className="flex justify-center">
-                    {api.sensitive ? (
-                      <Badge className="text-[10px] px-2 bg-amber-500/15 text-amber-600 border-amber-500/30 hover:bg-amber-500/25 gap-1">
-                        <ShieldAlert className="w-3 h-3" />
-                        Sensitive
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] px-2 text-muted-foreground">
-                        Standard
-                      </Badge>
-                    )}
                   </div>
                   <div className="flex justify-center gap-1.5">
                     <Button
@@ -399,7 +383,7 @@ export function APIDocsTab() {
         )}
       </div>
 
-      {/* Sensitive API Warning Dialog */}
+      {/* Sensitive API Share Confirmation Dialog */}
       <Dialog open={!!pendingSensitive} onOpenChange={(open) => !open && setPendingSensitive(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -407,17 +391,25 @@ export function APIDocsTab() {
               <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center">
                 <ShieldAlert className="w-5 h-5 text-amber-500" />
               </div>
-              <DialogTitle>Sensitive API Access</DialogTitle>
+              <DialogTitle>Sensitive API in Selection</DialogTitle>
             </div>
             <DialogDescription className="pt-2 text-sm">
-              <span className="font-medium text-foreground">{pendingSensitive?.name}</span> is a sensitive API and requires permission. Do you want to proceed?
+              {selectedSensitiveApis.length === 1 ? (
+                <>
+                  <span className="font-medium text-foreground">{selectedSensitiveApis[0]?.name}</span> is a sensitive API and requires permission to share. Do you want to proceed?
+                </>
+              ) : (
+                <>
+                  Your selection includes <span className="font-medium text-foreground">{selectedSensitiveApis.length} sensitive APIs</span> that require permission to share. Do you want to proceed?
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setPendingSensitive(null)}>
               No
             </Button>
-            <Button onClick={confirmSensitive} className="bg-amber-500 hover:bg-amber-600 text-white">
+            <Button onClick={confirmSensitiveShare} className="bg-amber-500 hover:bg-amber-600 text-white">
               Yes, proceed
             </Button>
           </DialogFooter>
@@ -430,19 +422,10 @@ export function APIDocsTab() {
           <DialogHeader className="p-6 pb-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg flex items-center gap-2">
-                  {viewingDoc?.name}
-                  {viewingDoc?.sensitive && <ShieldAlert className="w-4 h-4 text-amber-500" />}
-                </DialogTitle>
+                <DialogTitle className="text-lg">{viewingDoc?.name}</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">{viewingDoc?.description}</p>
               </div>
               <div className="flex items-center gap-2 mr-8">
-                {viewingDoc?.sensitive && (
-                  <Badge className="text-[10px] px-2 bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
-                    <ShieldAlert className="w-3 h-3" />
-                    Sensitive
-                  </Badge>
-                )}
                 <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
                   <a href={viewingDoc?.docUrl} download>
                     <Download className="w-3 h-3" />
