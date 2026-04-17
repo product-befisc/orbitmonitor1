@@ -224,6 +224,7 @@ export function APIDocsTab() {
     setSelectedApiIds(new Set());
     setRecipientEmail('');
     setShareReason('');
+    setShareSearch('');
   };
 
   const handleShareSubmit = () => {
