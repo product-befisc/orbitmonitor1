@@ -173,6 +173,7 @@ export function APIDocsTab() {
   const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
   const [recipientEmail, setRecipientEmail] = useState('');
   const [shareReason, setShareReason] = useState('');
+  const [shareSearch, setShareSearch] = useState('');
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
@@ -223,6 +224,7 @@ export function APIDocsTab() {
     setSelectedApiIds(new Set());
     setRecipientEmail('');
     setShareReason('');
+    setShareSearch('');
   };
 
   const handleShareSubmit = () => {
@@ -484,29 +486,57 @@ export function APIDocsTab() {
                   <Label className="text-xs font-medium mb-1.5 block">
                     Select APIs ({selectedApiIds.size} selected)
                   </Label>
-                  <ScrollArea className="h-[240px] border border-border rounded-md p-2">
-                    {CATEGORY_ORDER.filter(c => API_DOCS.some(a => a.category === c)).map(cat => (
-                      <div key={cat} className="mb-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
-                          {cat}
-                        </p>
-                        {API_DOCS.filter(a => a.category === cat).map(api => (
-                          <label
-                            key={api.id}
-                            className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/40 rounded cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={selectedApiIds.has(api.id)}
-                              onCheckedChange={() => toggleApiSelection(api.id)}
-                            />
-                            <span className="text-sm flex-1">{api.name}</span>
-                            {api.sensitive && (
-                              <ShieldAlert className="w-3 h-3 text-amber-500" />
-                            )}
-                          </label>
-                        ))}
-                      </div>
-                    ))}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search APIs..."
+                      value={shareSearch}
+                      onChange={e => setShareSearch(e.target.value)}
+                      className="h-8 text-xs pl-8"
+                    />
+                  </div>
+                  <ScrollArea className="h-[210px] border border-border rounded-md p-2">
+                    {(() => {
+                      const q = shareSearch.trim().toLowerCase();
+                      const matches = (a: APIDoc) =>
+                        !q ||
+                        a.name.toLowerCase().includes(q) ||
+                        a.category.toLowerCase().includes(q) ||
+                        (a.subcategory?.toLowerCase().includes(q) ?? false) ||
+                        a.description.toLowerCase().includes(q);
+                      const cats = CATEGORY_ORDER.filter(c =>
+                        API_DOCS.some(a => a.category === c && matches(a))
+                      );
+                      if (cats.length === 0) {
+                        return (
+                          <p className="text-xs text-muted-foreground text-center py-6">
+                            No APIs match "{shareSearch}"
+                          </p>
+                        );
+                      }
+                      return cats.map(cat => (
+                        <div key={cat} className="mb-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
+                            {cat}
+                          </p>
+                          {API_DOCS.filter(a => a.category === cat && matches(a)).map(api => (
+                            <label
+                              key={api.id}
+                              className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/40 rounded cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedApiIds.has(api.id)}
+                                onCheckedChange={() => toggleApiSelection(api.id)}
+                              />
+                              <span className="text-sm flex-1">{api.name}</span>
+                              {api.sensitive && (
+                                <ShieldAlert className="w-3 h-3 text-amber-500" />
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      ));
+                    })()}
                   </ScrollArea>
                 </div>
 
