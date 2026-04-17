@@ -196,21 +196,18 @@ export function APIDocsTab() {
       .map(cat => [cat, map.get(cat)!] as [string, APIDoc[]]);
   }, [filtered]);
 
-  const sensitiveCount = filtered.filter(a => a.sensitive).length;
-
   const handleViewClick = (api: APIDoc) => {
-    if (api.sensitive) {
-      setPendingSensitive(api);
-    } else {
-      setViewingDoc(api);
-    }
+    setViewingDoc(api);
   };
 
-  const confirmSensitive = () => {
-    if (pendingSensitive) {
-      setViewingDoc(pendingSensitive);
-      setPendingSensitive(null);
-    }
+  const selectedSensitiveApis = useMemo(
+    () => API_DOCS.filter(a => selectedApiIds.has(a.id) && a.sensitive),
+    [selectedApiIds]
+  );
+
+  const confirmSensitiveShare = () => {
+    setPendingSensitive(null);
+    performShare();
   };
 
   const toggleApiSelection = (id: string) => {
