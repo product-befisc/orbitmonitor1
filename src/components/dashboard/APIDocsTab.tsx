@@ -17,6 +17,7 @@ interface APIDoc {
   id: string;
   name: string;
   category: string;
+  subcategory: string;
   sensitive?: boolean;
   docUrl: string;
   description: string;
