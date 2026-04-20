@@ -172,8 +172,10 @@ export function APIDocsTab() {
   // Share form state
   const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [shareSearch, setShareSearch] = useState('');
+  const [confirmShareOpen, setConfirmShareOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
