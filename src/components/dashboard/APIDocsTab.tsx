@@ -210,7 +210,7 @@ export function APIDocsTab() {
 
   const confirmSensitiveShare = () => {
     setPendingSensitive(null);
-    performShare();
+    setConfirmShareOpen(true);
   };
 
   const toggleApiSelection = (id: string) => {
@@ -225,6 +225,7 @@ export function APIDocsTab() {
   const resetShareForm = () => {
     setSelectedApiIds(new Set());
     setRecipientEmail('');
+    setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
   };
@@ -238,6 +239,10 @@ export function APIDocsTab() {
       toast({ title: 'Invalid email', description: 'Please enter a valid recipient email.', variant: 'destructive' });
       return;
     }
+    if (!emailSubject.trim()) {
+      toast({ title: 'Subject required', description: 'Please enter an email subject.', variant: 'destructive' });
+      return;
+    }
 
     // If any selected APIs are sensitive, ask for confirmation first
     const firstSensitive = API_DOCS.find(a => selectedApiIds.has(a.id) && a.sensitive);
@@ -246,7 +251,7 @@ export function APIDocsTab() {
       return;
     }
 
-    performShare();
+    setConfirmShareOpen(true);
   };
 
   const performShare = () => {
