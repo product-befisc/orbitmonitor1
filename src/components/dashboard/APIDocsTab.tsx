@@ -654,6 +654,45 @@ export function APIDocsTab() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Final Share Confirmation Dialog */}
+      <Dialog open={confirmShareOpen} onOpenChange={setConfirmShareOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              Confirm Share
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Please review the details before sending the API documentation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-[90px_1fr] gap-y-2 gap-x-3 text-sm">
+              <span className="text-muted-foreground">Recipient</span>
+              <span className="font-medium break-all">{recipientEmail}</span>
+
+              <span className="text-muted-foreground">CC</span>
+              <span className="font-medium break-all">{ADMIN_EMAIL}</span>
+
+              <span className="text-muted-foreground">Subject</span>
+              <span className="font-medium break-words">{emailSubject}</span>
+
+              <span className="text-muted-foreground">APIs</span>
+              <span className="font-medium">{selectedApiIds.size} selected</span>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmShareOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={performShare} className="gap-1.5">
+              <Send className="w-3.5 h-3.5" />
+              Confirm & Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
