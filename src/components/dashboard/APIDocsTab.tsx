@@ -288,6 +288,8 @@ export function APIDocsTab() {
       title: 'Documentation shared',
       description: `Sent ${apiNames.length} API doc(s) to ${recipientEmail} (CC: ${ADMIN_EMAIL})`,
     });
+    setConfirmShareOpen(false);
+    setShareOpen(false);
     resetShareForm();
   };
 
