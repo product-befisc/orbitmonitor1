@@ -573,6 +573,19 @@ export function APIDocsTab() {
                 </div>
 
                 <div>
+                  <Label htmlFor="emailSubject" className="text-xs font-medium mb-1.5 block">
+                    Subject <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="emailSubject"
+                    placeholder="API Documentation as requested"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="emailBody" className="text-xs font-medium mb-1.5 block">
                     Email body
                   </Label>
