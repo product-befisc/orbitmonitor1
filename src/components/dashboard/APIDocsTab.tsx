@@ -284,8 +284,12 @@ export function APIDocsTab() {
 
   const performShare = () => {
     const apiNames = API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => a.name);
+    const recipients = recipientEmails;
+    const recipientsKey = [...recipients].sort().join(',');
 
-    const existingIdx = shareHistory.findIndex(r => r.sharedTo === recipientEmail);
+    const existingIdx = shareHistory.findIndex(
+      r => [...r.sharedTo].sort().join(',') === recipientsKey
+    );
     if (existingIdx >= 0) {
       const updated = [...shareHistory];
       updated[existingIdx] = {
@@ -301,7 +305,7 @@ export function APIDocsTab() {
         {
           id: `s${Date.now()}`,
           apiNames,
-          sharedTo: recipientEmail,
+          sharedTo: recipients,
           cc: ADMIN_EMAIL,
           reason: emailBody,
           sharedBy: CURRENT_USER,
@@ -314,7 +318,7 @@ export function APIDocsTab() {
 
     toast({
       title: 'Documentation shared',
-      description: `Sent ${apiNames.length} API doc(s) to ${recipientEmail} (CC: ${ADMIN_EMAIL})`,
+      description: `Sent ${apiNames.length} API doc(s) to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
     });
     setConfirmShareOpen(false);
     setShareOpen(false);
