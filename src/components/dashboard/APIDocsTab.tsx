@@ -734,8 +734,12 @@ export function APIDocsTab() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-[90px_1fr] gap-y-2 gap-x-3 text-sm">
-              <span className="text-muted-foreground">Recipient</span>
-              <span className="font-medium break-all">{recipientEmail}</span>
+              <span className="text-muted-foreground">Recipients</span>
+              <div className="flex flex-wrap gap-1">
+                {recipientEmails.map(e => (
+                  <Badge key={e} variant="secondary" className="text-[11px] font-normal">{e}</Badge>
+                ))}
+              </div>
 
               <span className="text-muted-foreground">CC</span>
               <span className="font-medium break-all">{ADMIN_EMAIL}</span>
