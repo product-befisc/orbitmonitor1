@@ -226,10 +226,31 @@ export function APIDocsTab() {
 
   const resetShareForm = () => {
     setSelectedApiIds(new Set());
-    setRecipientEmail('');
+    setRecipientEmails([]);
+    setRecipientInput('');
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
+  };
+
+  const isValidEmail = (e: string) => /\S+@\S+\.\S+/.test(e);
+
+  const commitRecipientInput = () => {
+    const raw = recipientInput.trim().replace(/[,;]+$/, '');
+    if (!raw) return true;
+    const parts = raw.split(/[\s,;]+/).map(p => p.trim()).filter(Boolean);
+    const invalid = parts.filter(p => !isValidEmail(p));
+    if (invalid.length) {
+      toast({ title: 'Invalid email', description: `${invalid.join(', ')} is not a valid email.`, variant: 'destructive' });
+      return false;
+    }
+    setRecipientEmails(prev => Array.from(new Set([...prev, ...parts])));
+    setRecipientInput('');
+    return true;
+  };
+
+  const removeRecipient = (email: string) => {
+    setRecipientEmails(prev => prev.filter(e => e !== email));
   };
 
   const handleShareSubmit = () => {
@@ -237,8 +258,13 @@ export function APIDocsTab() {
       toast({ title: 'No APIs selected', description: 'Please select at least one API to share.', variant: 'destructive' });
       return;
     }
-    if (!recipientEmail || !/\S+@\S+\.\S+/.test(recipientEmail)) {
-      toast({ title: 'Invalid email', description: 'Please enter a valid recipient email.', variant: 'destructive' });
+    // Commit any pending text in the recipient input
+    if (!commitRecipientInput()) return;
+    const allRecipients = recipientInput.trim()
+      ? Array.from(new Set([...recipientEmails, ...recipientInput.trim().split(/[\s,;]+/).filter(Boolean)]))
+      : recipientEmails;
+    if (allRecipients.length === 0) {
+      toast({ title: 'Recipient required', description: 'Please add at least one recipient email.', variant: 'destructive' });
       return;
     }
     if (!emailSubject.trim()) {
