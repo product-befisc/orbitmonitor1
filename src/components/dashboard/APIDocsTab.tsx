@@ -26,7 +26,7 @@ interface APIDoc {
 interface ShareRecord {
   id: string;
   apiNames: string[];
-  sharedTo: string;
+  sharedTo: string[];
   cc: string;
   reason: string;
   sharedBy: string;
@@ -132,7 +132,7 @@ const INITIAL_SHARE_HISTORY: ShareRecord[] = [
   {
     id: 's1',
     apiNames: ['PAN Verification API', 'Aadhaar Verification API'],
-    sharedTo: 'partner@acme.com',
+    sharedTo: ['partner@acme.com'],
     cc: ADMIN_EMAIL,
     reason: 'Onboarding documentation for new client integration',
     sharedBy: 'analyst@befisc.com',
@@ -142,7 +142,7 @@ const INITIAL_SHARE_HISTORY: ShareRecord[] = [
   {
     id: 's2',
     apiNames: ['GST Verification API'],
-    sharedTo: 'devteam@fintech.io',
+    sharedTo: ['devteam@fintech.io'],
     cc: ADMIN_EMAIL,
     reason: 'Technical evaluation',
     sharedBy: 'analyst@befisc.com',
@@ -171,11 +171,13 @@ export function APIDocsTab() {
 
   // Share form state
   const [selectedApiIds, setSelectedApiIds] = useState<Set<string>>(new Set());
-  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientEmails, setRecipientEmails] = useState<string[]>([]);
+  const [recipientInput, setRecipientInput] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [shareSearch, setShareSearch] = useState('');
   const [confirmShareOpen, setConfirmShareOpen] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState('');
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
@@ -224,10 +226,31 @@ export function APIDocsTab() {
 
   const resetShareForm = () => {
     setSelectedApiIds(new Set());
-    setRecipientEmail('');
+    setRecipientEmails([]);
+    setRecipientInput('');
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
+  };
+
+  const isValidEmail = (e: string) => /\S+@\S+\.\S+/.test(e);
+
+  const commitRecipientInput = () => {
+    const raw = recipientInput.trim().replace(/[,;]+$/, '');
+    if (!raw) return true;
+    const parts = raw.split(/[\s,;]+/).map(p => p.trim()).filter(Boolean);
+    const invalid = parts.filter(p => !isValidEmail(p));
+    if (invalid.length) {
+      toast({ title: 'Invalid email', description: `${invalid.join(', ')} is not a valid email.`, variant: 'destructive' });
+      return false;
+    }
+    setRecipientEmails(prev => Array.from(new Set([...prev, ...parts])));
+    setRecipientInput('');
+    return true;
+  };
+
+  const removeRecipient = (email: string) => {
+    setRecipientEmails(prev => prev.filter(e => e !== email));
   };
 
   const handleShareSubmit = () => {
@@ -235,8 +258,13 @@ export function APIDocsTab() {
       toast({ title: 'No APIs selected', description: 'Please select at least one API to share.', variant: 'destructive' });
       return;
     }
-    if (!recipientEmail || !/\S+@\S+\.\S+/.test(recipientEmail)) {
-      toast({ title: 'Invalid email', description: 'Please enter a valid recipient email.', variant: 'destructive' });
+    // Commit any pending text in the recipient input
+    if (!commitRecipientInput()) return;
+    const allRecipients = recipientInput.trim()
+      ? Array.from(new Set([...recipientEmails, ...recipientInput.trim().split(/[\s,;]+/).filter(Boolean)]))
+      : recipientEmails;
+    if (allRecipients.length === 0) {
+      toast({ title: 'Recipient required', description: 'Please add at least one recipient email.', variant: 'destructive' });
       return;
     }
     if (!emailSubject.trim()) {
@@ -256,8 +284,12 @@ export function APIDocsTab() {
 
   const performShare = () => {
     const apiNames = API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => a.name);
+    const recipients = recipientEmails;
+    const recipientsKey = [...recipients].sort().join(',');
 
-    const existingIdx = shareHistory.findIndex(r => r.sharedTo === recipientEmail);
+    const existingIdx = shareHistory.findIndex(
+      r => [...r.sharedTo].sort().join(',') === recipientsKey
+    );
     if (existingIdx >= 0) {
       const updated = [...shareHistory];
       updated[existingIdx] = {
@@ -273,7 +305,7 @@ export function APIDocsTab() {
         {
           id: `s${Date.now()}`,
           apiNames,
-          sharedTo: recipientEmail,
+          sharedTo: recipients,
           cc: ADMIN_EMAIL,
           reason: emailBody,
           sharedBy: CURRENT_USER,
@@ -286,7 +318,7 @@ export function APIDocsTab() {
 
     toast({
       title: 'Documentation shared',
-      description: `Sent ${apiNames.length} API doc(s) to ${recipientEmail} (CC: ${ADMIN_EMAIL})`,
+      description: `Sent ${apiNames.length} API doc(s) to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
     });
     setConfirmShareOpen(false);
     setShareOpen(false);
@@ -552,16 +584,49 @@ export function APIDocsTab() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="recipient" className="text-xs font-medium mb-1.5 block">
-                      Recipient Email <span className="text-destructive">*</span>
+                      Recipient Emails <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="recipient"
-                      type="email"
-                      placeholder="recipient@example.com"
-                      value={recipientEmail}
-                      onChange={e => setRecipientEmail(e.target.value)}
-                      className="h-9 text-sm"
-                    />
+                    <div className="min-h-9 px-2 py-1 rounded-md border border-input bg-background flex flex-wrap items-center gap-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+                      {recipientEmails.map(email => (
+                        <Badge
+                          key={email}
+                          variant="secondary"
+                          className="text-xs h-6 pl-2 pr-1 gap-1 font-normal"
+                        >
+                          {email}
+                          <button
+                            type="button"
+                            onClick={() => removeRecipient(email)}
+                            className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+                            aria-label={`Remove ${email}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        id="recipient"
+                        type="email"
+                        placeholder={recipientEmails.length ? 'Add another...' : 'recipient@example.com'}
+                        value={recipientInput}
+                        onChange={e => setRecipientInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ',' || e.key === ';' || e.key === 'Tab') {
+                            if (recipientInput.trim()) {
+                              e.preventDefault();
+                              commitRecipientInput();
+                            }
+                          } else if (e.key === 'Backspace' && !recipientInput && recipientEmails.length) {
+                            removeRecipient(recipientEmails[recipientEmails.length - 1]);
+                          }
+                        }}
+                        onBlur={() => commitRecipientInput()}
+                        className="flex-1 min-w-[120px] bg-transparent outline-none text-sm h-7 px-1"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Press Enter, comma, or semicolon to add multiple emails.
+                    </p>
                   </div>
                   <div>
                     <Label className="text-xs font-medium mb-1.5 block">CC (auto)</Label>
@@ -610,46 +675,100 @@ export function APIDocsTab() {
               </div>
             </TabsContent>
 
-            <TabsContent value="history" className="flex-1 overflow-hidden mt-3 px-6 pb-6 data-[state=inactive]:hidden">
-              <ScrollArea className="h-full">
-                <div className="space-y-2 pr-3">
-                  {shareHistory.length === 0 && (
-                    <div className="text-center py-8 text-sm text-muted-foreground">
-                      No share history yet.
-                    </div>
-                  )}
-                  {shareHistory.map(record => (
-                    <Card key={record.id} className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p className="text-sm font-medium truncate">{record.sharedTo}</p>
-                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0">
-                              {record.count}× shared
-                            </Badge>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            CC: {record.cc} · By {record.sharedBy} · {record.sharedAt}
-                          </p>
-                        </div>
+            <TabsContent value="history" className="flex-1 overflow-hidden mt-3 px-6 pb-6 data-[state=inactive]:hidden flex flex-col">
+              {(() => {
+                const uniqueRecipients = Array.from(
+                  new Set(shareHistory.flatMap(r => r.sharedTo))
+                ).sort();
+                const q = historyFilter.trim().toLowerCase();
+                const filteredHistory = q
+                  ? shareHistory.filter(r =>
+                      r.sharedTo.some(e => e.toLowerCase().includes(q)) ||
+                      r.sharedBy.toLowerCase().includes(q)
+                    )
+                  : shareHistory;
+                return (
+                  <>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <Input
+                          placeholder="Filter by recipient or sender email..."
+                          value={historyFilter}
+                          onChange={e => setHistoryFilter(e.target.value)}
+                          className="h-8 text-xs pl-8 pr-8"
+                          list="history-recipients"
+                        />
+                        <datalist id="history-recipients">
+                          {uniqueRecipients.map(e => (
+                            <option key={e} value={e} />
+                          ))}
+                        </datalist>
+                        {historyFilter && (
+                          <button
+                            type="button"
+                            onClick={() => setHistoryFilter('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="Clear filter"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {record.apiNames.map(name => (
-                          <Badge key={name} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-                            {name}
-                          </Badge>
+                      <Badge variant="outline" className="text-[10px] h-7 px-2">
+                        {filteredHistory.length} / {shareHistory.length}
+                      </Badge>
+                    </div>
+                    <ScrollArea className="flex-1">
+                      <div className="space-y-2 pr-3">
+                        {filteredHistory.length === 0 && (
+                          <div className="text-center py-8 text-sm text-muted-foreground">
+                            {shareHistory.length === 0 ? 'No share history yet.' : `No history matches "${historyFilter}".`}
+                          </div>
+                        )}
+                        {filteredHistory.map(record => (
+                          <Card key={record.id} className="p-3">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                                  {record.sharedTo.map(email => (
+                                    <Badge
+                                      key={email}
+                                      variant="secondary"
+                                      className="text-[11px] px-1.5 py-0 h-5 font-normal"
+                                    >
+                                      {email}
+                                    </Badge>
+                                  ))}
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0">
+                                    {record.count}× shared
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  CC: {record.cc} · By {record.sharedBy} · {record.sharedAt}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {record.apiNames.map(name => (
+                                <Badge key={name} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                                  {name}
+                                </Badge>
+                              ))}
+                            </div>
+                            {record.reason && (
+                              <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
+                                "{record.reason}"
+                              </p>
+                            )}
+                          </Card>
                         ))}
                       </div>
-                      {record.reason && (
-                        <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
-                          "{record.reason}"
-                        </p>
-                      )}
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
+                    </ScrollArea>
+                  </>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </DialogContent>
@@ -669,8 +788,12 @@ export function APIDocsTab() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid grid-cols-[90px_1fr] gap-y-2 gap-x-3 text-sm">
-              <span className="text-muted-foreground">Recipient</span>
-              <span className="font-medium break-all">{recipientEmail}</span>
+              <span className="text-muted-foreground">Recipients</span>
+              <div className="flex flex-wrap gap-1">
+                {recipientEmails.map(e => (
+                  <Badge key={e} variant="secondary" className="text-[11px] font-normal">{e}</Badge>
+                ))}
+              </div>
 
               <span className="text-muted-foreground">CC</span>
               <span className="font-medium break-all">{ADMIN_EMAIL}</span>
