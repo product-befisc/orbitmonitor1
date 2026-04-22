@@ -132,7 +132,7 @@ const INITIAL_SHARE_HISTORY: ShareRecord[] = [
   {
     id: 's1',
     apiNames: ['PAN Verification API', 'Aadhaar Verification API'],
-    sharedTo: 'partner@acme.com',
+    sharedTo: ['partner@acme.com'],
     cc: ADMIN_EMAIL,
     reason: 'Onboarding documentation for new client integration',
     sharedBy: 'analyst@befisc.com',
@@ -142,7 +142,7 @@ const INITIAL_SHARE_HISTORY: ShareRecord[] = [
   {
     id: 's2',
     apiNames: ['GST Verification API'],
-    sharedTo: 'devteam@fintech.io',
+    sharedTo: ['devteam@fintech.io'],
     cc: ADMIN_EMAIL,
     reason: 'Technical evaluation',
     sharedBy: 'analyst@befisc.com',
