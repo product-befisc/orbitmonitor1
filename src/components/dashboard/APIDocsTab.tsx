@@ -675,46 +675,100 @@ export function APIDocsTab() {
               </div>
             </TabsContent>
 
-            <TabsContent value="history" className="flex-1 overflow-hidden mt-3 px-6 pb-6 data-[state=inactive]:hidden">
-              <ScrollArea className="h-full">
-                <div className="space-y-2 pr-3">
-                  {shareHistory.length === 0 && (
-                    <div className="text-center py-8 text-sm text-muted-foreground">
-                      No share history yet.
-                    </div>
-                  )}
-                  {shareHistory.map(record => (
-                    <Card key={record.id} className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p className="text-sm font-medium truncate">{record.sharedTo}</p>
-                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0">
-                              {record.count}× shared
-                            </Badge>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            CC: {record.cc} · By {record.sharedBy} · {record.sharedAt}
-                          </p>
-                        </div>
+            <TabsContent value="history" className="flex-1 overflow-hidden mt-3 px-6 pb-6 data-[state=inactive]:hidden flex flex-col">
+              {(() => {
+                const uniqueRecipients = Array.from(
+                  new Set(shareHistory.flatMap(r => r.sharedTo))
+                ).sort();
+                const q = historyFilter.trim().toLowerCase();
+                const filteredHistory = q
+                  ? shareHistory.filter(r =>
+                      r.sharedTo.some(e => e.toLowerCase().includes(q)) ||
+                      r.sharedBy.toLowerCase().includes(q)
+                    )
+                  : shareHistory;
+                return (
+                  <>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <Input
+                          placeholder="Filter by recipient or sender email..."
+                          value={historyFilter}
+                          onChange={e => setHistoryFilter(e.target.value)}
+                          className="h-8 text-xs pl-8 pr-8"
+                          list="history-recipients"
+                        />
+                        <datalist id="history-recipients">
+                          {uniqueRecipients.map(e => (
+                            <option key={e} value={e} />
+                          ))}
+                        </datalist>
+                        {historyFilter && (
+                          <button
+                            type="button"
+                            onClick={() => setHistoryFilter('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="Clear filter"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {record.apiNames.map(name => (
-                          <Badge key={name} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-                            {name}
-                          </Badge>
+                      <Badge variant="outline" className="text-[10px] h-7 px-2">
+                        {filteredHistory.length} / {shareHistory.length}
+                      </Badge>
+                    </div>
+                    <ScrollArea className="flex-1">
+                      <div className="space-y-2 pr-3">
+                        {filteredHistory.length === 0 && (
+                          <div className="text-center py-8 text-sm text-muted-foreground">
+                            {shareHistory.length === 0 ? 'No share history yet.' : `No history matches "${historyFilter}".`}
+                          </div>
+                        )}
+                        {filteredHistory.map(record => (
+                          <Card key={record.id} className="p-3">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                                  {record.sharedTo.map(email => (
+                                    <Badge
+                                      key={email}
+                                      variant="secondary"
+                                      className="text-[11px] px-1.5 py-0 h-5 font-normal"
+                                    >
+                                      {email}
+                                    </Badge>
+                                  ))}
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0">
+                                    {record.count}× shared
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  CC: {record.cc} · By {record.sharedBy} · {record.sharedAt}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {record.apiNames.map(name => (
+                                <Badge key={name} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                                  {name}
+                                </Badge>
+                              ))}
+                            </div>
+                            {record.reason && (
+                              <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
+                                "{record.reason}"
+                              </p>
+                            )}
+                          </Card>
                         ))}
                       </div>
-                      {record.reason && (
-                        <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
-                          "{record.reason}"
-                        </p>
-                      )}
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
+                    </ScrollArea>
+                  </>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </DialogContent>
