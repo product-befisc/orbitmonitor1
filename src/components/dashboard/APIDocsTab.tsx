@@ -26,7 +26,7 @@ interface APIDoc {
 interface ShareRecord {
   id: string;
   apiNames: string[];
-  sharedTo: string;
+  sharedTo: string[];
   cc: string;
   reason: string;
   sharedBy: string;
