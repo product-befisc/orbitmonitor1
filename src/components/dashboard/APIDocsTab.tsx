@@ -584,16 +584,49 @@ export function APIDocsTab() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="recipient" className="text-xs font-medium mb-1.5 block">
-                      Recipient Email <span className="text-destructive">*</span>
+                      Recipient Emails <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="recipient"
-                      type="email"
-                      placeholder="recipient@example.com"
-                      value={recipientEmail}
-                      onChange={e => setRecipientEmail(e.target.value)}
-                      className="h-9 text-sm"
-                    />
+                    <div className="min-h-9 px-2 py-1 rounded-md border border-input bg-background flex flex-wrap items-center gap-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+                      {recipientEmails.map(email => (
+                        <Badge
+                          key={email}
+                          variant="secondary"
+                          className="text-xs h-6 pl-2 pr-1 gap-1 font-normal"
+                        >
+                          {email}
+                          <button
+                            type="button"
+                            onClick={() => removeRecipient(email)}
+                            className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+                            aria-label={`Remove ${email}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <input
+                        id="recipient"
+                        type="email"
+                        placeholder={recipientEmails.length ? 'Add another...' : 'recipient@example.com'}
+                        value={recipientInput}
+                        onChange={e => setRecipientInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ',' || e.key === ';' || e.key === 'Tab') {
+                            if (recipientInput.trim()) {
+                              e.preventDefault();
+                              commitRecipientInput();
+                            }
+                          } else if (e.key === 'Backspace' && !recipientInput && recipientEmails.length) {
+                            removeRecipient(recipientEmails[recipientEmails.length - 1]);
+                          }
+                        }}
+                        onBlur={() => commitRecipientInput()}
+                        className="flex-1 min-w-[120px] bg-transparent outline-none text-sm h-7 px-1"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Press Enter, comma, or semicolon to add multiple emails.
+                    </p>
                   </div>
                   <div>
                     <Label className="text-xs font-medium mb-1.5 block">CC (auto)</Label>
