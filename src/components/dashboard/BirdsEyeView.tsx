@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ClientAPIDateTable } from '@/components/dashboard/ClientAPIDateTable';
 import { APIClientDateTable } from '@/components/dashboard/APIClientDateTable';
@@ -84,8 +85,20 @@ interface GroupListProps {
   onSearchChange: (v: string) => void;
 }
 
+type SortKey = 'hits' | 'success' | 'sourceDown' | 'notFound' | 'otherError' | 'failures';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'hits', label: 'Total Hits' },
+  { value: 'success', label: 'Success Rate' },
+  { value: 'sourceDown', label: 'Source Down' },
+  { value: 'notFound', label: '404 Not Found' },
+  { value: 'otherError', label: 'Other Errors' },
+  { value: 'failures', label: 'Total Failures' },
+];
+
 function GroupList({ groups, groupBy, search, onSearchChange }: GroupListProps) {
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<SortKey>('hits');
 
   const toggle = (key: string) => {
     setOpenKeys(prev => {
@@ -97,13 +110,26 @@ function GroupList({ groups, groupBy, search, onSearchChange }: GroupListProps) 
   };
 
   const filtered = useMemo(() => {
-    if (!search) return groups;
-    const q = search.toLowerCase();
-    return groups.filter(g =>
-      g.key.toLowerCase().includes(q) ||
-      g.items.some(a => (groupBy === 'client' ? a.name : a.client).toLowerCase().includes(q))
-    );
-  }, [groups, search, groupBy]);
+    const base = !search
+      ? groups
+      : groups.filter(g => {
+          const q = search.toLowerCase();
+          return g.key.toLowerCase().includes(q) ||
+            g.items.some(a => (groupBy === 'client' ? a.name : a.client).toLowerCase().includes(q));
+        });
+    const sorted = [...base].sort((a, b) => {
+      switch (sortBy) {
+        case 'success': return b.successRate - a.successRate;
+        case 'sourceDown': return b.sourceDown - a.sourceDown;
+        case 'notFound': return b.notFound - a.notFound;
+        case 'otherError': return b.otherError - a.otherError;
+        case 'failures': return b.failures - a.failures;
+        case 'hits':
+        default: return b.totalHits - a.totalHits;
+      }
+    });
+    return sorted;
+  }, [groups, search, groupBy, sortBy]);
 
   const itemLabel = groupBy === 'client' ? 'APIs' : 'Clients';
   const placeholder = groupBy === 'client' ? 'Search clients or APIs…' : 'Search APIs or clients…';
@@ -111,9 +137,24 @@ function GroupList({ groups, groupBy, search, onSearchChange }: GroupListProps) 
 
   return (
     <>
-      <div className="relative max-w-sm mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder={placeholder} value={search} onChange={e => onSearchChange(e.target.value)} className="pl-9 h-9" />
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative max-w-sm flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder={placeholder} value={search} onChange={e => onSearchChange(e.target.value)} className="pl-9 h-9" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Sort by</span>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
+            <SelectTrigger className="h-9 w-[170px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-2">
