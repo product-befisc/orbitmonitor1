@@ -296,16 +296,42 @@ export function CommercialBuilder({
     validityDays,
     walletRecharge,
     walletRechargeNote,
+    walletHidden,
     setupFees,
     setupFeesWaived,
+    setupFeesHidden,
     amcFees,
     amcWaived,
+    amcHidden,
     minMonthly,
     minMonthlyWaived,
+    minMonthlyHidden,
+    extraFees,
     rows,
     notes,
     apis,
   });
+
+  const addExtraFee = () => {
+    setExtraFees(prev => [
+      ...prev,
+      {
+        id: `xf-${Date.now()}`,
+        label: 'Custom Line',
+        amount: 0,
+        waived: false,
+        hidden: false,
+      },
+    ]);
+  };
+
+  const updateExtraFee = (id: string, patch: Partial<ExtraFee>) => {
+    setExtraFees(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+  };
+
+  const removeExtraFee = (id: string) => {
+    setExtraFees(prev => prev.filter(f => f.id !== id));
+  };
 
   const handleShare = () => {
     onShare?.(collectData());
