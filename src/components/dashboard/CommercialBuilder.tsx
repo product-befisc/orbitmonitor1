@@ -619,18 +619,40 @@ export function CommercialBuilder({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border shrink-0 bg-background">
-          <p className="text-[11px] text-muted-foreground">
-            Live preview reflects all changes in real time.
-          </p>
+        <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border shrink-0 bg-background flex-wrap">
+          {enableSave ? (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Label className="text-[11px] text-muted-foreground whitespace-nowrap">
+                Save as
+              </Label>
+              <Input
+                value={saveName}
+                onChange={e => setSaveName(e.target.value)}
+                placeholder={clientName ? `${clientName} — Proposal` : 'e.g. Acme — FY 2025-26'}
+                className="h-8 text-xs max-w-[320px]"
+              />
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              Live preview reflects all changes in real time.
+            </p>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleShare} className="gap-1.5">
-              <Send className="w-3.5 h-3.5" />
-              Share with Client
-            </Button>
+            {enableSave && (
+              <Button onClick={handleSave} variant="secondary" className="gap-1.5">
+                <Save className="w-3.5 h-3.5" />
+                {initialSaveName ? 'Update' : 'Save'}
+              </Button>
+            )}
+            {enableShare && (
+              <Button onClick={handleShare} className="gap-1.5">
+                <Send className="w-3.5 h-3.5" />
+                {shareLabel}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
