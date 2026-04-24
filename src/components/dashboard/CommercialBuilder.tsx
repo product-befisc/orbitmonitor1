@@ -56,6 +56,8 @@ export interface CommercialData {
   minMonthlyWaived: boolean;
   rows: Record<string, APIRow>;
   notes: string;
+  /** APIs included in this commercial — persisted so saved commercials retain their API list & categories. */
+  apis?: CommercialAPI[];
 }
 
 const DEFAULT_NOTES = `a. Kindly read all terms, and conditions and give consent before making payment.
