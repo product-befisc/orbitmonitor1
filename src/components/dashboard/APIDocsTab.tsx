@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCommercials, type SavedCommercial } from '@/lib/commercialsStore';
 import { cn } from '@/lib/utils';
 
-interface APIDoc {
+export interface APIDoc {
   id: string;
   name: string;
   category: string;
