@@ -15,6 +15,7 @@ import { APIConsumptionChart, type StatusDayData } from '@/components/dashboard/
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
 import { APIDocsTab } from '@/components/dashboard/APIDocsTab';
+import { CommercialsTab } from '@/components/dashboard/CommercialsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
