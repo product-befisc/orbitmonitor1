@@ -430,9 +430,14 @@ export function CommercialsTab() {
         open={builderOpen}
         onOpenChange={open => {
           setBuilderOpen(open);
-          if (!open) setEditing(null);
+          if (!open) {
+            setEditing(null);
+            setBuilderApis([]);
+          }
         }}
         apis={builderApis}
+        availableApis={availableApis}
+        onApisChange={setBuilderApis}
         initialData={editing?.data}
         initialSaveName={editing?.name ?? ''}
         initialClientName={editing?.data.clientName ?? ''}
