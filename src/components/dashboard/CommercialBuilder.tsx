@@ -924,12 +924,17 @@ interface PreviewProps {
   validityDays: number;
   walletRecharge: number;
   walletRechargeNote: string;
+  walletHidden: boolean;
   setupFees: number;
   setupFeesWaived: boolean;
+  setupFeesHidden: boolean;
   amcFees: number;
   amcWaived: boolean;
+  amcHidden: boolean;
   minMonthly: number;
   minMonthlyWaived: boolean;
+  minMonthlyHidden: boolean;
+  extraFees: ExtraFee[];
   grouped: [string, CommercialAPI[]][];
   rows: Record<string, APIRow>;
   notes: string;
