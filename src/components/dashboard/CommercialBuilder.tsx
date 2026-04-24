@@ -57,12 +57,9 @@ export interface APIRow {
 
 export interface ExtraFee {
   id: string;
-  label: string;
-  amount: number;
-  waived: boolean;
+  /** Free-form text the user types — rendered as-is in the proposal. */
+  text: string;
   hidden: boolean;
-  /** Optional supporting note shown below the line in the preview. */
-  note?: string;
 }
 
 export interface CommercialData {
@@ -317,9 +314,7 @@ export function CommercialBuilder({
       ...prev,
       {
         id: `xf-${Date.now()}`,
-        label: 'Custom Line',
-        amount: 0,
-        waived: false,
+        text: '',
         hidden: false,
       },
     ]);
@@ -569,77 +564,42 @@ export function CommercialBuilder({
                   </div>
                 ))}
 
-                {/* Custom extra fee lines */}
+                {/* Custom free-form lines */}
                 {extraFees.map(f => (
                   <div
                     key={f.id}
                     className={cn(
-                      'rounded-md border border-dashed border-border p-3 space-y-2 transition-opacity',
+                      'rounded-md border border-dashed border-border p-2 flex items-start gap-2 transition-opacity',
                       f.hidden && 'opacity-50',
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <Input
-                        value={f.label}
-                        onChange={e => updateExtraFee(f.id, { label: e.target.value })}
-                        placeholder="Line label (e.g. Onboarding Fee)"
-                        className="h-8 text-xs flex-1 min-w-[160px] font-medium"
-                      />
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <Switch
-                            checked={f.waived}
-                            onCheckedChange={c => updateExtraFee(f.id, { waived: c })}
-                            className="scale-75"
-                            disabled={f.hidden}
-                          />
-                          <span className="text-[10px] text-muted-foreground">
-                            Not Applicable
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => updateExtraFee(f.id, { hidden: !f.hidden })}
-                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                          {f.hidden ? (
-                            <>
-                              <EyeOff className="w-3 h-3" /> Hidden
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="w-3 h-3" /> Visible
-                            </>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeExtraFee(f.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                          aria-label="Remove line"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={f.amount}
-                      onChange={e =>
-                        updateExtraFee(f.id, { amount: Number(e.target.value) || 0 })
-                      }
-                      className="h-9 text-sm"
-                      placeholder="Amount (INR)"
-                      disabled={f.hidden}
-                    />
                     <Textarea
-                      value={f.note ?? ''}
-                      onChange={e => updateExtraFee(f.id, { note: e.target.value })}
-                      placeholder="Optional note (shown below the line in proposal)"
-                      className="text-xs min-h-[44px]"
+                      value={f.text}
+                      onChange={e => updateExtraFee(f.id, { text: e.target.value })}
+                      placeholder="Type anything (e.g. Onboarding Fee : ₹5,000 — waived for first month)"
+                      className="text-xs min-h-[40px] flex-1"
                       disabled={f.hidden}
                     />
+                    <div className="flex flex-col items-center gap-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => updateExtraFee(f.id, { hidden: !f.hidden })}
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={f.hidden ? 'Show line' : 'Hide line'}
+                        title={f.hidden ? 'Show' : 'Hide'}
+                      >
+                        {f.hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeExtraFee(f.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Remove line"
+                        title="Remove"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </section>
@@ -1023,7 +983,7 @@ function ProposalPreview(p: PreviewProps) {
             hidden: p.minMonthlyHidden,
           },
         ].filter(r => !r.hidden);
-        const extras = (p.extraFees || []).filter(f => !f.hidden);
+        const extras = (p.extraFees || []).filter(f => !f.hidden && f.text.trim().length > 0);
         if (builtIn.length === 0 && extras.length === 0) return null;
         return (
           <div className="border-t border-border">
@@ -1039,15 +999,9 @@ function ProposalPreview(p: PreviewProps) {
             {extras.map(f => (
               <div
                 key={f.id}
-                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
+                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border whitespace-pre-wrap"
               >
-                {(f.label || 'Custom Line')} : {p.fmtINR(f.amount)}{' '}
-                {f.waived && <span className="font-normal">{naLabel}</span>}
-                {f.note && (
-                  <p className="text-[11px] font-normal mt-1 leading-relaxed text-foreground">
-                    {f.note}
-                  </p>
-                )}
+                {f.text}
               </div>
             ))}
           </div>
