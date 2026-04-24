@@ -239,6 +239,9 @@ export function APIDocsTab() {
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
+    setCommercialData(null);
+    setAttachCommercials(false);
+    setAttachDocs(true);
   };
 
   const isValidEmail = (e: string) => /\S+@\S+\.\S+/.test(e);
