@@ -181,12 +181,18 @@ export function APIDocsTab() {
   const [confirmShareOpen, setConfirmShareOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState('');
 
-  // Commercial Builder state
+  // Commercial attachment state
   const [commercialPromptOpen, setCommercialPromptOpen] = useState(false);
-  const [commercialBuilderOpen, setCommercialBuilderOpen] = useState(false);
-  const [commercialData, setCommercialData] = useState<CommercialData | null>(null);
+  const [commercialPickerOpen, setCommercialPickerOpen] = useState(false);
+  const [selectedCommercialId, setSelectedCommercialId] = useState<string | null>(null);
   const [attachDocs, setAttachDocs] = useState(true);
   const [attachCommercials, setAttachCommercials] = useState(false);
+
+  const savedCommercials = useCommercials();
+  const selectedCommercial: SavedCommercial | null = useMemo(
+    () => savedCommercials.find(c => c.id === selectedCommercialId) ?? null,
+    [savedCommercials, selectedCommercialId],
+  );
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
