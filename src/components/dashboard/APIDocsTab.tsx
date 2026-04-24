@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCommercials, type SavedCommercial } from '@/lib/commercialsStore';
 import { cn } from '@/lib/utils';
 
-interface APIDoc {
+export interface APIDoc {
   id: string;
   name: string;
   category: string;
@@ -39,7 +39,7 @@ interface ShareRecord {
 const ADMIN_EMAIL = 'admin@befisc.com';
 const CURRENT_USER = 'analyst@befisc.com';
 
-const API_DOCS: APIDoc[] = [
+export const API_DOCS: APIDoc[] = [
   // Aadhaar APIs
   { id: 'aad-1', name: 'Aadhaar Verification API', category: 'Aadhaar APIs', subcategory: 'Identity Verification', sensitive: true, docUrl: '#', description: 'Aadhaar-based identity verification' },
   { id: 'aad-2', name: 'Aadhaar OTP Validation API', category: 'Aadhaar APIs', subcategory: 'OTP & Authentication', sensitive: true, docUrl: '#', description: 'Validate Aadhaar via OTP' },
