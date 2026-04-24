@@ -98,6 +98,10 @@ interface CommercialBuilderProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   apis: CommercialAPI[];
+  /** Full catalog of APIs available for selection inside the builder. */
+  availableApis?: CommercialAPI[];
+  /** Called when user adds/removes APIs from the inline picker. */
+  onApisChange?: (apis: CommercialAPI[]) => void;
   initialClientName?: string;
   /** Existing commercial data to load into the form (edit mode). */
   initialData?: CommercialData;
@@ -117,6 +121,8 @@ export function CommercialBuilder({
   open,
   onOpenChange,
   apis,
+  availableApis,
+  onApisChange,
   initialClientName = '',
   initialData,
   initialSaveName = '',
