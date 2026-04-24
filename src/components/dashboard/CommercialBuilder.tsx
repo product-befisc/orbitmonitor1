@@ -449,12 +449,47 @@ export function CommercialBuilder({
 
               {/* Section 3 — Per-API Pricing */}
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold tracking-tight">
-                  Slab Based Pricing — Per API
-                </h3>
-                <p className="text-[11px] text-muted-foreground -mt-1">
-                  Each API can have its own slabs. Add or remove slabs individually.
-                </p>
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight">
+                      Slab Based Pricing — Per API
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Each API can have its own slabs. Add or remove slabs individually.
+                    </p>
+                  </div>
+                  {onApisChange && availableApis && availableApis.length > 0 && (
+                    <ApiMultiSelect
+                      available={availableApis}
+                      selected={apis}
+                      onChange={onApisChange}
+                    />
+                  )}
+                </div>
+
+                {onApisChange && apis.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {apis.map(a => (
+                      <Badge
+                        key={a.id}
+                        variant="secondary"
+                        className="text-[10px] h-5 pl-1.5 pr-1 gap-1 font-normal"
+                      >
+                        {a.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onApisChange(apis.filter(x => x.id !== a.id))
+                          }
+                          className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+                          aria-label={`Remove ${a.name}`}
+                        >
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
                 {grouped.map(([category, catApis]) => (
                   <div key={category} className="rounded-md border border-border overflow-hidden">
