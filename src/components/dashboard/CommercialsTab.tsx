@@ -42,6 +42,7 @@ import {
   type CommercialAPI,
   type CommercialData,
 } from './CommercialBuilder';
+import { API_DOCS } from './APIDocsTab';
 import {
   COMMERCIAL_ADMIN_EMAIL,
   recordCommercialShare,
