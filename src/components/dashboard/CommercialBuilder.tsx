@@ -574,7 +574,7 @@ export function CommercialBuilder({
                     )}
                   >
                     <Textarea
-                      value={f.text}
+                      value={f.text ?? ''}
                       onChange={e => updateExtraFee(f.id, { text: e.target.value })}
                       placeholder="Type anything (e.g. Onboarding Fee : ₹5,000 — waived for first month)"
                       className="text-xs min-h-[40px] flex-1"
