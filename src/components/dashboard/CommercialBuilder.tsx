@@ -10,6 +10,8 @@ import {
   Check,
   ChevronsUpDown,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -53,6 +55,16 @@ export interface APIRow {
   slabs: SlabCell[]; // PER-API slabs
 }
 
+export interface ExtraFee {
+  id: string;
+  label: string;
+  amount: number;
+  waived: boolean;
+  hidden: boolean;
+  /** Optional supporting note shown below the line in the preview. */
+  note?: string;
+}
+
 export interface CommercialData {
   serviceProvider: string;
   clientName: string;
@@ -60,12 +72,18 @@ export interface CommercialData {
   validityDays: number;
   walletRecharge: number;
   walletRechargeNote: string;
+  walletHidden?: boolean;
   setupFees: number;
   setupFeesWaived: boolean;
+  setupFeesHidden?: boolean;
   amcFees: number;
   amcWaived: boolean;
+  amcHidden?: boolean;
   minMonthly: number;
   minMonthlyWaived: boolean;
+  minMonthlyHidden?: boolean;
+  /** User-added extra fee/info lines. */
+  extraFees?: ExtraFee[];
   rows: Record<string, APIRow>;
   notes: string;
   /** APIs included in this commercial — persisted so saved commercials retain their API list & categories. */
@@ -143,12 +161,17 @@ export function CommercialBuilder({
   const [walletRechargeNote, setWalletRechargeNote] = useState(
     initialData?.walletRechargeNote ?? DEFAULT_WALLET_NOTE,
   );
+  const [walletHidden, setWalletHidden] = useState(initialData?.walletHidden ?? false);
   const [setupFees, setSetupFees] = useState(initialData?.setupFees ?? 50000);
   const [setupFeesWaived, setSetupFeesWaived] = useState(initialData?.setupFeesWaived ?? true);
+  const [setupFeesHidden, setSetupFeesHidden] = useState(initialData?.setupFeesHidden ?? false);
   const [amcFees, setAmcFees] = useState(initialData?.amcFees ?? 25000);
   const [amcWaived, setAmcWaived] = useState(initialData?.amcWaived ?? true);
+  const [amcHidden, setAmcHidden] = useState(initialData?.amcHidden ?? false);
   const [minMonthly, setMinMonthly] = useState(initialData?.minMonthly ?? 50000);
   const [minMonthlyWaived, setMinMonthlyWaived] = useState(initialData?.minMonthlyWaived ?? true);
+  const [minMonthlyHidden, setMinMonthlyHidden] = useState(initialData?.minMonthlyHidden ?? false);
+  const [extraFees, setExtraFees] = useState<ExtraFee[]>(initialData?.extraFees ?? []);
   const [notes, setNotes] = useState(initialData?.notes ?? DEFAULT_NOTES);
   const [rows, setRows] = useState<Record<string, APIRow>>(initialData?.rows ?? {});
   const [saveName, setSaveName] = useState(initialSaveName);
@@ -163,12 +186,17 @@ export function CommercialBuilder({
       setValidityDays(initialData.validityDays);
       setWalletRecharge(initialData.walletRecharge);
       setWalletRechargeNote(initialData.walletRechargeNote);
+      setWalletHidden(initialData.walletHidden ?? false);
       setSetupFees(initialData.setupFees);
       setSetupFeesWaived(initialData.setupFeesWaived);
+      setSetupFeesHidden(initialData.setupFeesHidden ?? false);
       setAmcFees(initialData.amcFees);
       setAmcWaived(initialData.amcWaived);
+      setAmcHidden(initialData.amcHidden ?? false);
       setMinMonthly(initialData.minMonthly);
       setMinMonthlyWaived(initialData.minMonthlyWaived);
+      setMinMonthlyHidden(initialData.minMonthlyHidden ?? false);
+      setExtraFees(initialData.extraFees ?? []);
       setNotes(initialData.notes);
       setRows(initialData.rows);
     }
@@ -268,16 +296,42 @@ export function CommercialBuilder({
     validityDays,
     walletRecharge,
     walletRechargeNote,
+    walletHidden,
     setupFees,
     setupFeesWaived,
+    setupFeesHidden,
     amcFees,
     amcWaived,
+    amcHidden,
     minMonthly,
     minMonthlyWaived,
+    minMonthlyHidden,
+    extraFees,
     rows,
     notes,
     apis,
   });
+
+  const addExtraFee = () => {
+    setExtraFees(prev => [
+      ...prev,
+      {
+        id: `xf-${Date.now()}`,
+        label: 'Custom Line',
+        amount: 0,
+        waived: false,
+        hidden: false,
+      },
+    ]);
+  };
+
+  const updateExtraFee = (id: string, patch: Partial<ExtraFee>) => {
+    setExtraFees(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+  };
+
+  const removeExtraFee = (id: string) => {
+    setExtraFees(prev => prev.filter(f => f.id !== id));
+  };
 
   const handleShare = () => {
     onShare?.(collectData());
@@ -379,22 +433,57 @@ export function CommercialBuilder({
 
               {/* Section 2 — Fees */}
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold tracking-tight">Wallet & Fees</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold tracking-tight">Wallet & Fees</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={addExtraFee}
+                  >
+                    <Plus className="w-3 h-3" /> Add line
+                  </Button>
+                </div>
 
-                <div className="rounded-md border border-border p-3 space-y-2">
-                  <Label className="text-xs">One-Time Wallet Recharge (INR)</Label>
+                <div
+                  className={cn(
+                    'rounded-md border border-border p-3 space-y-2 transition-opacity',
+                    walletHidden && 'opacity-50',
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">One-Time Wallet Recharge (INR)</Label>
+                    <button
+                      type="button"
+                      onClick={() => setWalletHidden(v => !v)}
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      title={walletHidden ? 'Show in proposal' : 'Hide from proposal'}
+                    >
+                      {walletHidden ? (
+                        <>
+                          <EyeOff className="w-3 h-3" /> Hidden
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3 h-3" /> Visible
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <Input
                     type="number"
                     min={0}
                     value={walletRecharge}
                     onChange={e => setWalletRecharge(Number(e.target.value) || 0)}
                     className="h-9 text-sm"
+                    disabled={walletHidden}
                   />
                   <Label className="text-xs">Wallet Note</Label>
                   <Textarea
                     value={walletRechargeNote}
                     onChange={e => setWalletRechargeNote(e.target.value)}
                     className="text-xs min-h-[60px]"
+                    disabled={walletHidden}
                   />
                 </div>
 
@@ -406,6 +495,8 @@ export function CommercialBuilder({
                     setVal: setSetupFees,
                     waived: setupFeesWaived,
                     setWaived: setSetupFeesWaived,
+                    hidden: setupFeesHidden,
+                    setHidden: setSetupFeesHidden,
                   },
                   {
                     key: 'amc',
@@ -414,6 +505,8 @@ export function CommercialBuilder({
                     setVal: setAmcFees,
                     waived: amcWaived,
                     setWaived: setAmcWaived,
+                    hidden: amcHidden,
+                    setHidden: setAmcHidden,
                   },
                   {
                     key: 'min',
@@ -422,18 +515,47 @@ export function CommercialBuilder({
                     setVal: setMinMonthly,
                     waived: minMonthlyWaived,
                     setWaived: setMinMonthlyWaived,
+                    hidden: minMonthlyHidden,
+                    setHidden: setMinMonthlyHidden,
                   },
                 ].map(f => (
-                  <div key={f.key} className="rounded-md border border-border p-3">
-                    <div className="flex items-center justify-between mb-1.5">
+                  <div
+                    key={f.key}
+                    className={cn(
+                      'rounded-md border border-border p-3 transition-opacity',
+                      f.hidden && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                       <Label className="text-xs">{f.label} (INR)</Label>
-                      <div className="flex items-center gap-1.5">
-                        <Switch
-                          checked={f.waived}
-                          onCheckedChange={f.setWaived}
-                          className="scale-75"
-                        />
-                        <span className="text-[10px] text-muted-foreground">Not Applicable</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            checked={f.waived}
+                            onCheckedChange={f.setWaived}
+                            className="scale-75"
+                            disabled={f.hidden}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            Not Applicable
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => f.setHidden(v => !v)}
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                          title={f.hidden ? 'Show in proposal' : 'Hide from proposal'}
+                        >
+                          {f.hidden ? (
+                            <>
+                              <EyeOff className="w-3 h-3" /> Hidden
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3 h-3" /> Visible
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                     <Input
@@ -442,6 +564,81 @@ export function CommercialBuilder({
                       value={f.val}
                       onChange={e => f.setVal(Number(e.target.value) || 0)}
                       className="h-9 text-sm"
+                      disabled={f.hidden}
+                    />
+                  </div>
+                ))}
+
+                {/* Custom extra fee lines */}
+                {extraFees.map(f => (
+                  <div
+                    key={f.id}
+                    className={cn(
+                      'rounded-md border border-dashed border-border p-3 space-y-2 transition-opacity',
+                      f.hidden && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Input
+                        value={f.label}
+                        onChange={e => updateExtraFee(f.id, { label: e.target.value })}
+                        placeholder="Line label (e.g. Onboarding Fee)"
+                        className="h-8 text-xs flex-1 min-w-[160px] font-medium"
+                      />
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            checked={f.waived}
+                            onCheckedChange={c => updateExtraFee(f.id, { waived: c })}
+                            className="scale-75"
+                            disabled={f.hidden}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            Not Applicable
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateExtraFee(f.id, { hidden: !f.hidden })}
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          {f.hidden ? (
+                            <>
+                              <EyeOff className="w-3 h-3" /> Hidden
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3 h-3" /> Visible
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeExtraFee(f.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Remove line"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={f.amount}
+                      onChange={e =>
+                        updateExtraFee(f.id, { amount: Number(e.target.value) || 0 })
+                      }
+                      className="h-9 text-sm"
+                      placeholder="Amount (INR)"
+                      disabled={f.hidden}
+                    />
+                    <Textarea
+                      value={f.note ?? ''}
+                      onChange={e => updateExtraFee(f.id, { note: e.target.value })}
+                      placeholder="Optional note (shown below the line in proposal)"
+                      className="text-xs min-h-[44px]"
+                      disabled={f.hidden}
                     />
                   </div>
                 ))}
@@ -654,12 +851,17 @@ export function CommercialBuilder({
                 validityDays={validityDays}
                 walletRecharge={walletRecharge}
                 walletRechargeNote={walletRechargeNote}
+                walletHidden={walletHidden}
                 setupFees={setupFees}
                 setupFeesWaived={setupFeesWaived}
+                setupFeesHidden={setupFeesHidden}
                 amcFees={amcFees}
                 amcWaived={amcWaived}
+                amcHidden={amcHidden}
                 minMonthly={minMonthly}
                 minMonthlyWaived={minMonthlyWaived}
+                minMonthlyHidden={minMonthlyHidden}
+                extraFees={extraFees}
                 grouped={grouped}
                 rows={rows}
                 notes={notes}
@@ -722,12 +924,17 @@ interface PreviewProps {
   validityDays: number;
   walletRecharge: number;
   walletRechargeNote: string;
+  walletHidden: boolean;
   setupFees: number;
   setupFeesWaived: boolean;
+  setupFeesHidden: boolean;
   amcFees: number;
   amcWaived: boolean;
+  amcHidden: boolean;
   minMonthly: number;
   minMonthlyWaived: boolean;
+  minMonthlyHidden: boolean;
+  extraFees: ExtraFee[];
   grouped: [string, CommercialAPI[]][];
   rows: Record<string, APIRow>;
   notes: string;
@@ -781,37 +988,71 @@ function ProposalPreview(p: PreviewProps) {
       </div>
 
       {/* Wallet recharge block */}
-      <div className="border-t border-border px-5 py-3 bg-[hsl(220,40%,93%)]/60">
-        <p className="text-[12px] font-semibold text-foreground">
-          One-Time Wallet Recharge: {p.fmtINR(p.walletRecharge)} (Upfront Credit)
-        </p>
-        {p.walletRechargeNote && (
-          <p className="text-[11px] mt-2 leading-relaxed text-foreground">
-            {p.walletRechargeNote}
+      {!p.walletHidden && (
+        <div className="border-t border-border px-5 py-3 bg-[hsl(220,40%,93%)]/60">
+          <p className="text-[12px] font-semibold text-foreground">
+            One-Time Wallet Recharge: {p.fmtINR(p.walletRecharge)} (Upfront Credit)
           </p>
-        )}
-      </div>
+          {p.walletRechargeNote && (
+            <p className="text-[11px] mt-2 leading-relaxed text-foreground">
+              {p.walletRechargeNote}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Fee rows */}
-      <div className="border-t border-border">
-        {[
-          { label: 'One Time Set-Up Fees', val: p.setupFees, waived: p.setupFeesWaived },
-          { label: 'Annual Maintenance Fees', val: p.amcFees, waived: p.amcWaived },
+      {(() => {
+        const builtIn = [
+          {
+            label: 'One Time Set-Up Fees',
+            val: p.setupFees,
+            waived: p.setupFeesWaived,
+            hidden: p.setupFeesHidden,
+          },
+          {
+            label: 'Annual Maintenance Fees',
+            val: p.amcFees,
+            waived: p.amcWaived,
+            hidden: p.amcHidden,
+          },
           {
             label: 'Minimum Monthly Billing Commitments',
             val: p.minMonthly,
             waived: p.minMonthlyWaived,
+            hidden: p.minMonthlyHidden,
           },
-        ].map(row => (
-          <div
-            key={row.label}
-            className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
-          >
-            {row.label} : {p.fmtINR(row.val)}{' '}
-            {row.waived && <span className="font-normal">{naLabel}</span>}
+        ].filter(r => !r.hidden);
+        const extras = (p.extraFees || []).filter(f => !f.hidden);
+        if (builtIn.length === 0 && extras.length === 0) return null;
+        return (
+          <div className="border-t border-border">
+            {builtIn.map(row => (
+              <div
+                key={row.label}
+                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
+              >
+                {row.label} : {p.fmtINR(row.val)}{' '}
+                {row.waived && <span className="font-normal">{naLabel}</span>}
+              </div>
+            ))}
+            {extras.map(f => (
+              <div
+                key={f.id}
+                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
+              >
+                {(f.label || 'Custom Line')} : {p.fmtINR(f.amount)}{' '}
+                {f.waived && <span className="font-normal">{naLabel}</span>}
+                {f.note && (
+                  <p className="text-[11px] font-normal mt-1 leading-relaxed text-foreground">
+                    {f.note}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Pricing table */}
       {p.grouped.length > 0 && (
