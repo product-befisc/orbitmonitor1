@@ -220,7 +220,7 @@ export function APIDocsTab() {
 
   const confirmSensitiveShare = () => {
     setPendingSensitive(null);
-    setConfirmShareOpen(true);
+    setCommercialPromptOpen(true);
   };
 
   const toggleApiSelection = (id: string) => {
@@ -290,6 +290,37 @@ export function APIDocsTab() {
       return;
     }
 
+    setCommercialPromptOpen(true);
+  };
+
+  const selectedApisForCommercial: CommercialAPI[] = useMemo(
+    () =>
+      API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => ({
+        id: a.id,
+        name: a.name,
+        category: a.category,
+      })),
+    [selectedApiIds],
+  );
+
+  const handleCommercialPromptYes = () => {
+    setCommercialPromptOpen(false);
+    setCommercialBuilderOpen(true);
+  };
+
+  const handleCommercialPromptNo = () => {
+    setCommercialPromptOpen(false);
+    setCommercialData(null);
+    setAttachCommercials(false);
+    setAttachDocs(true);
+    setConfirmShareOpen(true);
+  };
+
+  const handleCommercialBuilderShare = (data: CommercialData) => {
+    setCommercialData(data);
+    setAttachCommercials(true);
+    setAttachDocs(true);
+    setCommercialBuilderOpen(false);
     setConfirmShareOpen(true);
   };
 
