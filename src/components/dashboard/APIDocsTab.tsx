@@ -300,34 +300,24 @@ export function APIDocsTab() {
     setCommercialPromptOpen(true);
   };
 
-  const selectedApisForCommercial: CommercialAPI[] = useMemo(
-    () =>
-      API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => ({
-        id: a.id,
-        name: a.name,
-        category: a.category,
-      })),
-    [selectedApiIds],
-  );
-
   const handleCommercialPromptYes = () => {
     setCommercialPromptOpen(false);
-    setCommercialBuilderOpen(true);
+    setCommercialPickerOpen(true);
   };
 
   const handleCommercialPromptNo = () => {
     setCommercialPromptOpen(false);
-    setCommercialData(null);
+    setSelectedCommercialId(null);
     setAttachCommercials(false);
     setAttachDocs(true);
     setConfirmShareOpen(true);
   };
 
-  const handleCommercialBuilderShare = (data: CommercialData) => {
-    setCommercialData(data);
+  const handleCommercialPicked = (commercialId: string) => {
+    setSelectedCommercialId(commercialId);
     setAttachCommercials(true);
     setAttachDocs(true);
-    setCommercialBuilderOpen(false);
+    setCommercialPickerOpen(false);
     setConfirmShareOpen(true);
   };
 
