@@ -53,6 +53,16 @@ export interface APIRow {
   slabs: SlabCell[]; // PER-API slabs
 }
 
+export interface ExtraFee {
+  id: string;
+  label: string;
+  amount: number;
+  waived: boolean;
+  hidden: boolean;
+  /** Optional supporting note shown below the line in the preview. */
+  note?: string;
+}
+
 export interface CommercialData {
   serviceProvider: string;
   clientName: string;
@@ -60,12 +70,18 @@ export interface CommercialData {
   validityDays: number;
   walletRecharge: number;
   walletRechargeNote: string;
+  walletHidden?: boolean;
   setupFees: number;
   setupFeesWaived: boolean;
+  setupFeesHidden?: boolean;
   amcFees: number;
   amcWaived: boolean;
+  amcHidden?: boolean;
   minMonthly: number;
   minMonthlyWaived: boolean;
+  minMonthlyHidden?: boolean;
+  /** User-added extra fee/info lines. */
+  extraFees?: ExtraFee[];
   rows: Record<string, APIRow>;
   notes: string;
   /** APIs included in this commercial — persisted so saved commercials retain their API list & categories. */
