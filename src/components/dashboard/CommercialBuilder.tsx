@@ -161,12 +161,17 @@ export function CommercialBuilder({
   const [walletRechargeNote, setWalletRechargeNote] = useState(
     initialData?.walletRechargeNote ?? DEFAULT_WALLET_NOTE,
   );
+  const [walletHidden, setWalletHidden] = useState(initialData?.walletHidden ?? false);
   const [setupFees, setSetupFees] = useState(initialData?.setupFees ?? 50000);
   const [setupFeesWaived, setSetupFeesWaived] = useState(initialData?.setupFeesWaived ?? true);
+  const [setupFeesHidden, setSetupFeesHidden] = useState(initialData?.setupFeesHidden ?? false);
   const [amcFees, setAmcFees] = useState(initialData?.amcFees ?? 25000);
   const [amcWaived, setAmcWaived] = useState(initialData?.amcWaived ?? true);
+  const [amcHidden, setAmcHidden] = useState(initialData?.amcHidden ?? false);
   const [minMonthly, setMinMonthly] = useState(initialData?.minMonthly ?? 50000);
   const [minMonthlyWaived, setMinMonthlyWaived] = useState(initialData?.minMonthlyWaived ?? true);
+  const [minMonthlyHidden, setMinMonthlyHidden] = useState(initialData?.minMonthlyHidden ?? false);
+  const [extraFees, setExtraFees] = useState<ExtraFee[]>(initialData?.extraFees ?? []);
   const [notes, setNotes] = useState(initialData?.notes ?? DEFAULT_NOTES);
   const [rows, setRows] = useState<Record<string, APIRow>>(initialData?.rows ?? {});
   const [saveName, setSaveName] = useState(initialSaveName);
@@ -181,12 +186,17 @@ export function CommercialBuilder({
       setValidityDays(initialData.validityDays);
       setWalletRecharge(initialData.walletRecharge);
       setWalletRechargeNote(initialData.walletRechargeNote);
+      setWalletHidden(initialData.walletHidden ?? false);
       setSetupFees(initialData.setupFees);
       setSetupFeesWaived(initialData.setupFeesWaived);
+      setSetupFeesHidden(initialData.setupFeesHidden ?? false);
       setAmcFees(initialData.amcFees);
       setAmcWaived(initialData.amcWaived);
+      setAmcHidden(initialData.amcHidden ?? false);
       setMinMonthly(initialData.minMonthly);
       setMinMonthlyWaived(initialData.minMonthlyWaived);
+      setMinMonthlyHidden(initialData.minMonthlyHidden ?? false);
+      setExtraFees(initialData.extraFees ?? []);
       setNotes(initialData.notes);
       setRows(initialData.rows);
     }
