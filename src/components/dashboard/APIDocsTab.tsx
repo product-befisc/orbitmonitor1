@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X, FileSpreadsheet } from 'lucide-react';
+import { CommercialBuilder, type CommercialData, type CommercialAPI } from './CommercialBuilder';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
