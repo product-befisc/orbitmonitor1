@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X, FileSpreadsheet } from 'lucide-react';
-import { CommercialBuilder, type CommercialData, type CommercialAPI } from './CommercialBuilder';
+import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X, FileSpreadsheet, FilePlus2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useCommercials, type SavedCommercial } from '@/lib/commercialsStore';
 import { cn } from '@/lib/utils';
 
 interface APIDoc {
@@ -180,12 +181,18 @@ export function APIDocsTab() {
   const [confirmShareOpen, setConfirmShareOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState('');
 
-  // Commercial Builder state
+  // Commercial attachment state
   const [commercialPromptOpen, setCommercialPromptOpen] = useState(false);
-  const [commercialBuilderOpen, setCommercialBuilderOpen] = useState(false);
-  const [commercialData, setCommercialData] = useState<CommercialData | null>(null);
+  const [commercialPickerOpen, setCommercialPickerOpen] = useState(false);
+  const [selectedCommercialId, setSelectedCommercialId] = useState<string | null>(null);
   const [attachDocs, setAttachDocs] = useState(true);
   const [attachCommercials, setAttachCommercials] = useState(false);
+
+  const savedCommercials = useCommercials();
+  const selectedCommercial: SavedCommercial | null = useMemo(
+    () => savedCommercials.find(c => c.id === selectedCommercialId) ?? null,
+    [savedCommercials, selectedCommercialId],
+  );
 
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
@@ -239,7 +246,7 @@ export function APIDocsTab() {
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
-    setCommercialData(null);
+    setSelectedCommercialId(null);
     setAttachCommercials(false);
     setAttachDocs(true);
   };
@@ -293,34 +300,24 @@ export function APIDocsTab() {
     setCommercialPromptOpen(true);
   };
 
-  const selectedApisForCommercial: CommercialAPI[] = useMemo(
-    () =>
-      API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => ({
-        id: a.id,
-        name: a.name,
-        category: a.category,
-      })),
-    [selectedApiIds],
-  );
-
   const handleCommercialPromptYes = () => {
     setCommercialPromptOpen(false);
-    setCommercialBuilderOpen(true);
+    setCommercialPickerOpen(true);
   };
 
   const handleCommercialPromptNo = () => {
     setCommercialPromptOpen(false);
-    setCommercialData(null);
+    setSelectedCommercialId(null);
     setAttachCommercials(false);
     setAttachDocs(true);
     setConfirmShareOpen(true);
   };
 
-  const handleCommercialBuilderShare = (data: CommercialData) => {
-    setCommercialData(data);
+  const handleCommercialPicked = (commercialId: string) => {
+    setSelectedCommercialId(commercialId);
     setAttachCommercials(true);
     setAttachDocs(true);
-    setCommercialBuilderOpen(false);
+    setCommercialPickerOpen(false);
     setConfirmShareOpen(true);
   };
 
@@ -360,7 +357,7 @@ export function APIDocsTab() {
 
     const parts: string[] = [];
     if (attachDocs) parts.push(`${apiNames.length} API doc(s)`);
-    if (attachCommercials && commercialData) parts.push('Commercial proposal');
+    if (attachCommercials && selectedCommercial) parts.push(`Commercial: ${selectedCommercial.name}`);
     toast({
       title: 'Shared with client',
       description: `Sent ${parts.join(' + ') || 'message'} to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
@@ -869,12 +866,12 @@ export function APIDocsTab() {
               <label
                 className={cn(
                   'flex items-start gap-2',
-                  commercialData ? 'cursor-pointer' : 'opacity-60',
+                  selectedCommercial ? 'cursor-pointer' : 'opacity-60',
                 )}
               >
                 <Checkbox
                   checked={attachCommercials}
-                  disabled={!commercialData}
+                  disabled={!selectedCommercial}
                   onCheckedChange={v => setAttachCommercials(!!v)}
                   className="mt-0.5"
                 />
@@ -883,9 +880,9 @@ export function APIDocsTab() {
                     <FileSpreadsheet className="w-3.5 h-3.5" /> Commercial Proposal
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {commercialData
-                      ? `Proposal for ${commercialData.clientName || 'client'} (PDF + shareable link)`
-                      : 'Not built — go back to add commercials'}
+                    {selectedCommercial
+                      ? `${selectedCommercial.name} · ${selectedCommercial.data.clientName || 'No client'}`
+                      : 'No commercial selected — none will be attached'}
                   </p>
                 </div>
               </label>
@@ -913,32 +910,100 @@ export function APIDocsTab() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4" />
-              Attach Commercial Proposal?
+              Attach a Commercial Proposal?
             </DialogTitle>
             <DialogDescription className="text-xs pt-1">
-              You can optionally build a structured pricing proposal to send along with
-              the API documentation. This generates a PDF and a shareable view-only link.
+              You can optionally attach a commercial proposal you've already built
+              in the Commercial Builder tab. Build new ones from there anytime.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={handleCommercialPromptNo}>
               No, continue
             </Button>
-            <Button onClick={handleCommercialPromptYes} className="gap-1.5">
+            <Button
+              onClick={handleCommercialPromptYes}
+              className="gap-1.5"
+              disabled={savedCommercials.length === 0}
+              title={savedCommercials.length === 0 ? 'No saved commercials yet' : undefined}
+            >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Yes, build commercials
+              Yes, pick a commercial
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Commercial Builder */}
-      <CommercialBuilder
-        open={commercialBuilderOpen}
-        onOpenChange={setCommercialBuilderOpen}
-        apis={selectedApisForCommercial}
-        onShare={handleCommercialBuilderShare}
-      />
+      {/* Commercial Picker */}
+      <Dialog open={commercialPickerOpen} onOpenChange={setCommercialPickerOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4" />
+              Select a Commercial Proposal
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-1">
+              Pick one of your saved commercials to attach with the API documentation.
+            </DialogDescription>
+          </DialogHeader>
+          {savedCommercials.length === 0 ? (
+            <div className="py-6 text-center space-y-2">
+              <FileSpreadsheet className="w-10 h-10 mx-auto text-muted-foreground/60" />
+              <p className="text-sm font-medium">No saved commercials yet</p>
+              <p className="text-xs text-muted-foreground">
+                Open the Commercial Builder tab to create one.
+              </p>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[360px] pr-3">
+              <RadioGroup
+                value={selectedCommercialId ?? ''}
+                onValueChange={v => setSelectedCommercialId(v)}
+                className="space-y-2"
+              >
+                {savedCommercials.map(c => (
+                  <label
+                    key={c.id}
+                    className={cn(
+                      'flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors',
+                      selectedCommercialId === c.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:bg-muted/40',
+                    )}
+                  >
+                    <RadioGroupItem value={c.id} className="mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {c.data.clientName || 'No client name'} · Updated {c.updatedAt}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {c.data.apis?.length ?? Object.keys(c.data.rows).length} APIs · Wallet ₹
+                        {c.data.walletRecharge.toLocaleString('en-IN')} · {c.data.validityDays} days validity
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            </ScrollArea>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setCommercialPickerOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedCommercialId && handleCommercialPicked(selectedCommercialId)
+              }
+              disabled={!selectedCommercialId}
+              className="gap-1.5"
+            >
+              <FilePlus2 className="w-3.5 h-3.5" />
+              Attach Selected
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

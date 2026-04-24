@@ -5,8 +5,8 @@ import {
   Plus,
   FileText,
   Send,
-  X,
   Trash2,
+  Save,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,8 @@ export interface CommercialData {
   minMonthlyWaived: boolean;
   rows: Record<string, APIRow>;
   notes: string;
+  /** APIs included in this commercial — persisted so saved commercials retain their API list & categories. */
+  apis?: CommercialAPI[];
 }
 
 const DEFAULT_NOTES = `a. Kindly read all terms, and conditions and give consent before making payment.
@@ -85,7 +87,18 @@ interface CommercialBuilderProps {
   onOpenChange: (open: boolean) => void;
   apis: CommercialAPI[];
   initialClientName?: string;
-  onShare: (data: CommercialData) => void;
+  /** Existing commercial data to load into the form (edit mode). */
+  initialData?: CommercialData;
+  /** Existing save name to preload (edit mode). */
+  initialSaveName?: string;
+  /** Show "Save" button & save-name input. */
+  enableSave?: boolean;
+  /** Show "Share with Client" button. Defaults to true. */
+  enableShare?: boolean;
+  /** Label for the primary share button. */
+  shareLabel?: string;
+  onShare?: (data: CommercialData) => void;
+  onSave?: (input: { name: string; data: CommercialData }) => void;
 }
 
 export function CommercialBuilder({
@@ -93,23 +106,57 @@ export function CommercialBuilder({
   onOpenChange,
   apis,
   initialClientName = '',
+  initialData,
+  initialSaveName = '',
+  enableSave = false,
+  enableShare = true,
+  shareLabel = 'Share with Client',
   onShare,
+  onSave,
 }: CommercialBuilderProps) {
-  const [serviceProvider, setServiceProvider] = useState('BEFISC PRIVATE LIMITED');
-  const [clientName, setClientName] = useState(initialClientName);
-  const [proposalDate, setProposalDate] = useState<Date>(new Date());
-  const [validityDays, setValidityDays] = useState(30);
+  const [serviceProvider, setServiceProvider] = useState(
+    initialData?.serviceProvider ?? 'BEFISC PRIVATE LIMITED',
+  );
+  const [clientName, setClientName] = useState(initialData?.clientName ?? initialClientName);
+  const [proposalDate, setProposalDate] = useState<Date>(initialData?.proposalDate ?? new Date());
+  const [validityDays, setValidityDays] = useState(initialData?.validityDays ?? 30);
 
-  const [walletRecharge, setWalletRecharge] = useState(25000);
-  const [walletRechargeNote, setWalletRechargeNote] = useState(DEFAULT_WALLET_NOTE);
-  const [setupFees, setSetupFees] = useState(50000);
-  const [setupFeesWaived, setSetupFeesWaived] = useState(true);
-  const [amcFees, setAmcFees] = useState(25000);
-  const [amcWaived, setAmcWaived] = useState(true);
-  const [minMonthly, setMinMonthly] = useState(50000);
-  const [minMonthlyWaived, setMinMonthlyWaived] = useState(true);
-  const [notes, setNotes] = useState(DEFAULT_NOTES);
-  const [rows, setRows] = useState<Record<string, APIRow>>({});
+  const [walletRecharge, setWalletRecharge] = useState(initialData?.walletRecharge ?? 25000);
+  const [walletRechargeNote, setWalletRechargeNote] = useState(
+    initialData?.walletRechargeNote ?? DEFAULT_WALLET_NOTE,
+  );
+  const [setupFees, setSetupFees] = useState(initialData?.setupFees ?? 50000);
+  const [setupFeesWaived, setSetupFeesWaived] = useState(initialData?.setupFeesWaived ?? true);
+  const [amcFees, setAmcFees] = useState(initialData?.amcFees ?? 25000);
+  const [amcWaived, setAmcWaived] = useState(initialData?.amcWaived ?? true);
+  const [minMonthly, setMinMonthly] = useState(initialData?.minMonthly ?? 50000);
+  const [minMonthlyWaived, setMinMonthlyWaived] = useState(initialData?.minMonthlyWaived ?? true);
+  const [notes, setNotes] = useState(initialData?.notes ?? DEFAULT_NOTES);
+  const [rows, setRows] = useState<Record<string, APIRow>>(initialData?.rows ?? {});
+  const [saveName, setSaveName] = useState(initialSaveName);
+
+  // Reset form whenever the dialog opens with a new initialData/save name
+  useEffect(() => {
+    if (!open) return;
+    if (initialData) {
+      setServiceProvider(initialData.serviceProvider);
+      setClientName(initialData.clientName);
+      setProposalDate(initialData.proposalDate);
+      setValidityDays(initialData.validityDays);
+      setWalletRecharge(initialData.walletRecharge);
+      setWalletRechargeNote(initialData.walletRechargeNote);
+      setSetupFees(initialData.setupFees);
+      setSetupFeesWaived(initialData.setupFeesWaived);
+      setAmcFees(initialData.amcFees);
+      setAmcWaived(initialData.amcWaived);
+      setMinMonthly(initialData.minMonthly);
+      setMinMonthlyWaived(initialData.minMonthlyWaived);
+      setNotes(initialData.notes);
+      setRows(initialData.rows);
+    }
+    setSaveName(initialSaveName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Initialize rows when APIs change — preserve existing edits
   useEffect(() => {
@@ -129,8 +176,8 @@ export function CommercialBuilder({
   }, [apis]);
 
   useEffect(() => {
-    if (open && initialClientName) setClientName(initialClientName);
-  }, [open, initialClientName]);
+    if (open && initialClientName && !initialData) setClientName(initialClientName);
+  }, [open, initialClientName, initialData]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, CommercialAPI[]>();
@@ -196,23 +243,30 @@ export function CommercialBuilder({
     });
   };
 
+  const collectData = (): CommercialData => ({
+    serviceProvider,
+    clientName,
+    proposalDate,
+    validityDays,
+    walletRecharge,
+    walletRechargeNote,
+    setupFees,
+    setupFeesWaived,
+    amcFees,
+    amcWaived,
+    minMonthly,
+    minMonthlyWaived,
+    rows,
+    notes,
+    apis,
+  });
+
   const handleShare = () => {
-    onShare({
-      serviceProvider,
-      clientName,
-      proposalDate,
-      validityDays,
-      walletRecharge,
-      walletRechargeNote,
-      setupFees,
-      setupFeesWaived,
-      amcFees,
-      amcWaived,
-      minMonthly,
-      minMonthlyWaived,
-      rows,
-      notes,
-    });
+    onShare?.(collectData());
+  };
+
+  const handleSave = () => {
+    onSave?.({ name: saveName.trim() || clientName || 'Untitled commercial', data: collectData() });
   };
 
   const fmtINR = (n: number) =>
@@ -565,18 +619,40 @@ export function CommercialBuilder({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between gap-2 px-6 py-3 border-t border-border shrink-0 bg-background">
-          <p className="text-[11px] text-muted-foreground">
-            Live preview reflects all changes in real time.
-          </p>
+        <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border shrink-0 bg-background flex-wrap">
+          {enableSave ? (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Label className="text-[11px] text-muted-foreground whitespace-nowrap">
+                Save as
+              </Label>
+              <Input
+                value={saveName}
+                onChange={e => setSaveName(e.target.value)}
+                placeholder={clientName ? `${clientName} — Proposal` : 'e.g. Acme — FY 2025-26'}
+                className="h-8 text-xs max-w-[320px]"
+              />
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              Live preview reflects all changes in real time.
+            </p>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleShare} className="gap-1.5">
-              <Send className="w-3.5 h-3.5" />
-              Share with Client
-            </Button>
+            {enableSave && (
+              <Button onClick={handleSave} variant="secondary" className="gap-1.5">
+                <Save className="w-3.5 h-3.5" />
+                {initialSaveName ? 'Update' : 'Save'}
+              </Button>
+            )}
+            {enableShare && (
+              <Button onClick={handleShare} className="gap-1.5">
+                <Send className="w-3.5 h-3.5" />
+                {shareLabel}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

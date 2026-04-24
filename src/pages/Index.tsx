@@ -15,6 +15,7 @@ import { APIConsumptionChart, type StatusDayData } from '@/components/dashboard/
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
 import { APIDocsTab } from '@/components/dashboard/APIDocsTab';
+import { CommercialsTab } from '@/components/dashboard/CommercialsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
@@ -246,6 +247,7 @@ const Index = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
           <TabsTrigger value="api-docs">API Docs</TabsTrigger>
+          <TabsTrigger value="commercials">Commercial Builder</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
@@ -345,6 +347,10 @@ const Index = () => {
 
         <TabsContent value="api-docs" className="mt-0">
           <APIDocsTab />
+        </TabsContent>
+
+        <TabsContent value="commercials" className="mt-0">
+          <CommercialsTab />
         </TabsContent>
       </Tabs>
     </div>
