@@ -866,12 +866,12 @@ export function APIDocsTab() {
               <label
                 className={cn(
                   'flex items-start gap-2',
-                  commercialData ? 'cursor-pointer' : 'opacity-60',
+                  selectedCommercial ? 'cursor-pointer' : 'opacity-60',
                 )}
               >
                 <Checkbox
                   checked={attachCommercials}
-                  disabled={!commercialData}
+                  disabled={!selectedCommercial}
                   onCheckedChange={v => setAttachCommercials(!!v)}
                   className="mt-0.5"
                 />
@@ -880,9 +880,9 @@ export function APIDocsTab() {
                     <FileSpreadsheet className="w-3.5 h-3.5" /> Commercial Proposal
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {commercialData
-                      ? `Proposal for ${commercialData.clientName || 'client'} (PDF + shareable link)`
-                      : 'Not built — go back to add commercials'}
+                    {selectedCommercial
+                      ? `${selectedCommercial.name} · ${selectedCommercial.data.clientName || 'No client'}`
+                      : 'No commercial selected — none will be attached'}
                   </p>
                 </div>
               </label>
