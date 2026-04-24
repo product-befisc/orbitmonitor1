@@ -113,11 +113,13 @@ export function CommercialsTab() {
 
   const openNew = () => {
     setEditing(null);
+    setBuilderApis([]);
     setBuilderOpen(true);
   };
 
   const openEdit = (c: SavedCommercial) => {
     setEditing(c);
+    setBuilderApis(c.data.apis ?? []);
     setBuilderOpen(true);
   };
 
