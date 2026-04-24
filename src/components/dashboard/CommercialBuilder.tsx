@@ -243,23 +243,30 @@ export function CommercialBuilder({
     });
   };
 
+  const collectData = (): CommercialData => ({
+    serviceProvider,
+    clientName,
+    proposalDate,
+    validityDays,
+    walletRecharge,
+    walletRechargeNote,
+    setupFees,
+    setupFeesWaived,
+    amcFees,
+    amcWaived,
+    minMonthly,
+    minMonthlyWaived,
+    rows,
+    notes,
+    apis,
+  });
+
   const handleShare = () => {
-    onShare({
-      serviceProvider,
-      clientName,
-      proposalDate,
-      validityDays,
-      walletRecharge,
-      walletRechargeNote,
-      setupFees,
-      setupFeesWaived,
-      amcFees,
-      amcWaived,
-      minMonthly,
-      minMonthlyWaived,
-      rows,
-      notes,
-    });
+    onShare?.(collectData());
+  };
+
+  const handleSave = () => {
+    onSave?.({ name: saveName.trim() || clientName || 'Untitled commercial', data: collectData() });
   };
 
   const fmtINR = (n: number) =>
