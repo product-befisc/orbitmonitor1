@@ -87,7 +87,18 @@ interface CommercialBuilderProps {
   onOpenChange: (open: boolean) => void;
   apis: CommercialAPI[];
   initialClientName?: string;
-  onShare: (data: CommercialData) => void;
+  /** Existing commercial data to load into the form (edit mode). */
+  initialData?: CommercialData;
+  /** Existing save name to preload (edit mode). */
+  initialSaveName?: string;
+  /** Show "Save" button & save-name input. */
+  enableSave?: boolean;
+  /** Show "Share with Client" button. Defaults to true. */
+  enableShare?: boolean;
+  /** Label for the primary share button. */
+  shareLabel?: string;
+  onShare?: (data: CommercialData) => void;
+  onSave?: (input: { name: string; data: CommercialData }) => void;
 }
 
 export function CommercialBuilder({
@@ -95,23 +106,57 @@ export function CommercialBuilder({
   onOpenChange,
   apis,
   initialClientName = '',
+  initialData,
+  initialSaveName = '',
+  enableSave = false,
+  enableShare = true,
+  shareLabel = 'Share with Client',
   onShare,
+  onSave,
 }: CommercialBuilderProps) {
-  const [serviceProvider, setServiceProvider] = useState('BEFISC PRIVATE LIMITED');
-  const [clientName, setClientName] = useState(initialClientName);
-  const [proposalDate, setProposalDate] = useState<Date>(new Date());
-  const [validityDays, setValidityDays] = useState(30);
+  const [serviceProvider, setServiceProvider] = useState(
+    initialData?.serviceProvider ?? 'BEFISC PRIVATE LIMITED',
+  );
+  const [clientName, setClientName] = useState(initialData?.clientName ?? initialClientName);
+  const [proposalDate, setProposalDate] = useState<Date>(initialData?.proposalDate ?? new Date());
+  const [validityDays, setValidityDays] = useState(initialData?.validityDays ?? 30);
 
-  const [walletRecharge, setWalletRecharge] = useState(25000);
-  const [walletRechargeNote, setWalletRechargeNote] = useState(DEFAULT_WALLET_NOTE);
-  const [setupFees, setSetupFees] = useState(50000);
-  const [setupFeesWaived, setSetupFeesWaived] = useState(true);
-  const [amcFees, setAmcFees] = useState(25000);
-  const [amcWaived, setAmcWaived] = useState(true);
-  const [minMonthly, setMinMonthly] = useState(50000);
-  const [minMonthlyWaived, setMinMonthlyWaived] = useState(true);
-  const [notes, setNotes] = useState(DEFAULT_NOTES);
-  const [rows, setRows] = useState<Record<string, APIRow>>({});
+  const [walletRecharge, setWalletRecharge] = useState(initialData?.walletRecharge ?? 25000);
+  const [walletRechargeNote, setWalletRechargeNote] = useState(
+    initialData?.walletRechargeNote ?? DEFAULT_WALLET_NOTE,
+  );
+  const [setupFees, setSetupFees] = useState(initialData?.setupFees ?? 50000);
+  const [setupFeesWaived, setSetupFeesWaived] = useState(initialData?.setupFeesWaived ?? true);
+  const [amcFees, setAmcFees] = useState(initialData?.amcFees ?? 25000);
+  const [amcWaived, setAmcWaived] = useState(initialData?.amcWaived ?? true);
+  const [minMonthly, setMinMonthly] = useState(initialData?.minMonthly ?? 50000);
+  const [minMonthlyWaived, setMinMonthlyWaived] = useState(initialData?.minMonthlyWaived ?? true);
+  const [notes, setNotes] = useState(initialData?.notes ?? DEFAULT_NOTES);
+  const [rows, setRows] = useState<Record<string, APIRow>>(initialData?.rows ?? {});
+  const [saveName, setSaveName] = useState(initialSaveName);
+
+  // Reset form whenever the dialog opens with a new initialData/save name
+  useEffect(() => {
+    if (!open) return;
+    if (initialData) {
+      setServiceProvider(initialData.serviceProvider);
+      setClientName(initialData.clientName);
+      setProposalDate(initialData.proposalDate);
+      setValidityDays(initialData.validityDays);
+      setWalletRecharge(initialData.walletRecharge);
+      setWalletRechargeNote(initialData.walletRechargeNote);
+      setSetupFees(initialData.setupFees);
+      setSetupFeesWaived(initialData.setupFeesWaived);
+      setAmcFees(initialData.amcFees);
+      setAmcWaived(initialData.amcWaived);
+      setMinMonthly(initialData.minMonthly);
+      setMinMonthlyWaived(initialData.minMonthlyWaived);
+      setNotes(initialData.notes);
+      setRows(initialData.rows);
+    }
+    setSaveName(initialSaveName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Initialize rows when APIs change — preserve existing edits
   useEffect(() => {
@@ -131,8 +176,8 @@ export function CommercialBuilder({
   }, [apis]);
 
   useEffect(() => {
-    if (open && initialClientName) setClientName(initialClientName);
-  }, [open, initialClientName]);
+    if (open && initialClientName && !initialData) setClientName(initialClientName);
+  }, [open, initialClientName, initialData]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, CommercialAPI[]>();
