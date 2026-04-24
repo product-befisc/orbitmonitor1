@@ -246,7 +246,7 @@ export function APIDocsTab() {
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
-    setCommercialData(null);
+    setSelectedCommercialId(null);
     setAttachCommercials(false);
     setAttachDocs(true);
   };
