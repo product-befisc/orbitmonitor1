@@ -988,37 +988,71 @@ function ProposalPreview(p: PreviewProps) {
       </div>
 
       {/* Wallet recharge block */}
-      <div className="border-t border-border px-5 py-3 bg-[hsl(220,40%,93%)]/60">
-        <p className="text-[12px] font-semibold text-foreground">
-          One-Time Wallet Recharge: {p.fmtINR(p.walletRecharge)} (Upfront Credit)
-        </p>
-        {p.walletRechargeNote && (
-          <p className="text-[11px] mt-2 leading-relaxed text-foreground">
-            {p.walletRechargeNote}
+      {!p.walletHidden && (
+        <div className="border-t border-border px-5 py-3 bg-[hsl(220,40%,93%)]/60">
+          <p className="text-[12px] font-semibold text-foreground">
+            One-Time Wallet Recharge: {p.fmtINR(p.walletRecharge)} (Upfront Credit)
           </p>
-        )}
-      </div>
+          {p.walletRechargeNote && (
+            <p className="text-[11px] mt-2 leading-relaxed text-foreground">
+              {p.walletRechargeNote}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Fee rows */}
-      <div className="border-t border-border">
-        {[
-          { label: 'One Time Set-Up Fees', val: p.setupFees, waived: p.setupFeesWaived },
-          { label: 'Annual Maintenance Fees', val: p.amcFees, waived: p.amcWaived },
+      {(() => {
+        const builtIn = [
+          {
+            label: 'One Time Set-Up Fees',
+            val: p.setupFees,
+            waived: p.setupFeesWaived,
+            hidden: p.setupFeesHidden,
+          },
+          {
+            label: 'Annual Maintenance Fees',
+            val: p.amcFees,
+            waived: p.amcWaived,
+            hidden: p.amcHidden,
+          },
           {
             label: 'Minimum Monthly Billing Commitments',
             val: p.minMonthly,
             waived: p.minMonthlyWaived,
+            hidden: p.minMonthlyHidden,
           },
-        ].map(row => (
-          <div
-            key={row.label}
-            className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
-          >
-            {row.label} : {p.fmtINR(row.val)}{' '}
-            {row.waived && <span className="font-normal">{naLabel}</span>}
+        ].filter(r => !r.hidden);
+        const extras = (p.extraFees || []).filter(f => !f.hidden);
+        if (builtIn.length === 0 && extras.length === 0) return null;
+        return (
+          <div className="border-t border-border">
+            {builtIn.map(row => (
+              <div
+                key={row.label}
+                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
+              >
+                {row.label} : {p.fmtINR(row.val)}{' '}
+                {row.waived && <span className="font-normal">{naLabel}</span>}
+              </div>
+            ))}
+            {extras.map(f => (
+              <div
+                key={f.id}
+                className="px-5 py-2 text-[12px] font-semibold text-foreground border-b border-border"
+              >
+                {(f.label || 'Custom Line')} : {p.fmtINR(f.amount)}{' '}
+                {f.waived && <span className="font-normal">{naLabel}</span>}
+                {f.note && (
+                  <p className="text-[11px] font-normal mt-1 leading-relaxed text-foreground">
+                    {f.note}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Pricing table */}
       {p.grouped.length > 0 && (
