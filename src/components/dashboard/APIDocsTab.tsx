@@ -357,7 +357,7 @@ export function APIDocsTab() {
 
     const parts: string[] = [];
     if (attachDocs) parts.push(`${apiNames.length} API doc(s)`);
-    if (attachCommercials && commercialData) parts.push('Commercial proposal');
+    if (attachCommercials && selectedCommercial) parts.push(`Commercial: ${selectedCommercial.name}`);
     toast({
       title: 'Shared with client',
       description: `Sent ${parts.join(' + ') || 'message'} to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
