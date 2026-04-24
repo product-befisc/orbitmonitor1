@@ -358,9 +358,12 @@ export function APIDocsTab() {
       ]);
     }
 
+    const parts: string[] = [];
+    if (attachDocs) parts.push(`${apiNames.length} API doc(s)`);
+    if (attachCommercials && commercialData) parts.push('Commercial proposal');
     toast({
-      title: 'Documentation shared',
-      description: `Sent ${apiNames.length} API doc(s) to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
+      title: 'Shared with client',
+      description: `Sent ${parts.join(' + ') || 'message'} to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
     });
     setConfirmShareOpen(false);
     setShareOpen(false);
