@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X } from 'lucide-react';
+import { Search, FileText, Download, ExternalLink, ChevronDown, ChevronRight, ShieldAlert, Share2, History, Mail, Send, X, FileSpreadsheet } from 'lucide-react';
+import { CommercialBuilder, type CommercialData, type CommercialAPI } from './CommercialBuilder';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,13 @@ export function APIDocsTab() {
   const [confirmShareOpen, setConfirmShareOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState('');
 
+  // Commercial Builder state
+  const [commercialPromptOpen, setCommercialPromptOpen] = useState(false);
+  const [commercialBuilderOpen, setCommercialBuilderOpen] = useState(false);
+  const [commercialData, setCommercialData] = useState<CommercialData | null>(null);
+  const [attachDocs, setAttachDocs] = useState(true);
+  const [attachCommercials, setAttachCommercials] = useState(false);
+
   const filtered = useMemo(() => {
     if (!search) return API_DOCS;
     const q = search.toLowerCase();
@@ -212,7 +220,7 @@ export function APIDocsTab() {
 
   const confirmSensitiveShare = () => {
     setPendingSensitive(null);
-    setConfirmShareOpen(true);
+    setCommercialPromptOpen(true);
   };
 
   const toggleApiSelection = (id: string) => {
@@ -231,6 +239,9 @@ export function APIDocsTab() {
     setEmailSubject('');
     setEmailBody('');
     setShareSearch('');
+    setCommercialData(null);
+    setAttachCommercials(false);
+    setAttachDocs(true);
   };
 
   const isValidEmail = (e: string) => /\S+@\S+\.\S+/.test(e);
@@ -279,6 +290,37 @@ export function APIDocsTab() {
       return;
     }
 
+    setCommercialPromptOpen(true);
+  };
+
+  const selectedApisForCommercial: CommercialAPI[] = useMemo(
+    () =>
+      API_DOCS.filter(a => selectedApiIds.has(a.id)).map(a => ({
+        id: a.id,
+        name: a.name,
+        category: a.category,
+      })),
+    [selectedApiIds],
+  );
+
+  const handleCommercialPromptYes = () => {
+    setCommercialPromptOpen(false);
+    setCommercialBuilderOpen(true);
+  };
+
+  const handleCommercialPromptNo = () => {
+    setCommercialPromptOpen(false);
+    setCommercialData(null);
+    setAttachCommercials(false);
+    setAttachDocs(true);
+    setConfirmShareOpen(true);
+  };
+
+  const handleCommercialBuilderShare = (data: CommercialData) => {
+    setCommercialData(data);
+    setAttachCommercials(true);
+    setAttachDocs(true);
+    setCommercialBuilderOpen(false);
     setConfirmShareOpen(true);
   };
 
@@ -316,9 +358,12 @@ export function APIDocsTab() {
       ]);
     }
 
+    const parts: string[] = [];
+    if (attachDocs) parts.push(`${apiNames.length} API doc(s)`);
+    if (attachCommercials && commercialData) parts.push('Commercial proposal');
     toast({
-      title: 'Documentation shared',
-      description: `Sent ${apiNames.length} API doc(s) to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
+      title: 'Shared with client',
+      description: `Sent ${parts.join(' + ') || 'message'} to ${recipients.join(', ')} (CC: ${ADMIN_EMAIL})`,
     });
     setConfirmShareOpen(false);
     setShareOpen(false);
@@ -780,10 +825,10 @@ export function APIDocsTab() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-4 h-4" />
-              Confirm Share
+              Confirm Share with Client
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Please review the details before sending the API documentation.
+              Choose what to attach and review the details before sending.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
@@ -800,22 +845,100 @@ export function APIDocsTab() {
 
               <span className="text-muted-foreground">Subject</span>
               <span className="font-medium break-words">{emailSubject}</span>
+            </div>
 
-              <span className="text-muted-foreground">APIs</span>
-              <span className="font-medium">{selectedApiIds.size} selected</span>
+            <div className="rounded-md border border-border p-3 space-y-2 bg-muted/30">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Attachments
+              </p>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox
+                  checked={attachDocs}
+                  onCheckedChange={v => setAttachDocs(!!v)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" /> API Documentation
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {selectedApiIds.size} API doc(s) attached
+                  </p>
+                </div>
+              </label>
+              <label
+                className={cn(
+                  'flex items-start gap-2',
+                  commercialData ? 'cursor-pointer' : 'opacity-60',
+                )}
+              >
+                <Checkbox
+                  checked={attachCommercials}
+                  disabled={!commercialData}
+                  onCheckedChange={v => setAttachCommercials(!!v)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-3.5 h-3.5" /> Commercial Proposal
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {commercialData
+                      ? `Proposal for ${commercialData.clientName || 'client'} (PDF + shareable link)`
+                      : 'Not built — go back to add commercials'}
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setConfirmShareOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={performShare} className="gap-1.5">
+            <Button
+              onClick={performShare}
+              className="gap-1.5"
+              disabled={!attachDocs && !attachCommercials}
+            >
               <Send className="w-3.5 h-3.5" />
               Confirm & Send
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Attach commercials prompt */}
+      <Dialog open={commercialPromptOpen} onOpenChange={setCommercialPromptOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4" />
+              Attach Commercial Proposal?
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-1">
+              You can optionally build a structured pricing proposal to send along with
+              the API documentation. This generates a PDF and a shareable view-only link.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={handleCommercialPromptNo}>
+              No, continue
+            </Button>
+            <Button onClick={handleCommercialPromptYes} className="gap-1.5">
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              Yes, build commercials
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Commercial Builder */}
+      <CommercialBuilder
+        open={commercialBuilderOpen}
+        onOpenChange={setCommercialBuilderOpen}
+        apis={selectedApisForCommercial}
+        onShare={handleCommercialBuilderShare}
+      />
     </div>
   );
 }
