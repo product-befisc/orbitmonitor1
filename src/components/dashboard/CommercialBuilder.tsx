@@ -574,7 +574,7 @@ export function CommercialBuilder({
                     )}
                   >
                     <Textarea
-                      value={f.text}
+                      value={f.text ?? ''}
                       onChange={e => updateExtraFee(f.id, { text: e.target.value })}
                       placeholder="Type anything (e.g. Onboarding Fee : ₹5,000 — waived for first month)"
                       className="text-xs min-h-[40px] flex-1"
@@ -983,7 +983,7 @@ function ProposalPreview(p: PreviewProps) {
             hidden: p.minMonthlyHidden,
           },
         ].filter(r => !r.hidden);
-        const extras = (p.extraFees || []).filter(f => !f.hidden && f.text.trim().length > 0);
+        const extras = (p.extraFees || []).filter(f => !f.hidden && (f.text ?? '').trim().length > 0);
         if (builtIn.length === 0 && extras.length === 0) return null;
         return (
           <div className="border-t border-border">
