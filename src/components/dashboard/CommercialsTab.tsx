@@ -67,6 +67,7 @@ export function CommercialsTab() {
 
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editing, setEditing] = useState<SavedCommercial | null>(null);
+  const [builderApis, setBuilderApis] = useState<CommercialAPI[]>([]);
 
   const [shareTarget, setShareTarget] = useState<SavedCommercial | null>(null);
   const [recipients, setRecipients] = useState<string[]>([]);
@@ -77,11 +78,16 @@ export function CommercialsTab() {
 
   const [pendingDelete, setPendingDelete] = useState<SavedCommercial | null>(null);
 
-  // Builder APIs come from the saved commercial when editing, or empty for new
-  const builderApis: CommercialAPI[] = useMemo(() => {
-    if (editing?.data.apis?.length) return editing.data.apis;
-    return [];
-  }, [editing]);
+  // Full catalog available for inline multi-select inside the builder
+  const availableApis: CommercialAPI[] = useMemo(
+    () =>
+      API_DOCS.map(d => ({
+        id: d.id,
+        name: d.name,
+        category: d.category,
+      })),
+    [],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
