@@ -851,12 +851,17 @@ export function CommercialBuilder({
                 validityDays={validityDays}
                 walletRecharge={walletRecharge}
                 walletRechargeNote={walletRechargeNote}
+                walletHidden={walletHidden}
                 setupFees={setupFees}
                 setupFeesWaived={setupFeesWaived}
+                setupFeesHidden={setupFeesHidden}
                 amcFees={amcFees}
                 amcWaived={amcWaived}
+                amcHidden={amcHidden}
                 minMonthly={minMonthly}
                 minMonthlyWaived={minMonthlyWaived}
+                minMonthlyHidden={minMonthlyHidden}
+                extraFees={extraFees}
                 grouped={grouped}
                 rows={rows}
                 notes={notes}
