@@ -979,3 +979,95 @@ function PricingTable({
     </div>
   );
 }
+
+/* -------------------- API Multi-Select -------------------- */
+
+function ApiMultiSelect({
+  available,
+  selected,
+  onChange,
+}: {
+  available: CommercialAPI[];
+  selected: CommercialAPI[];
+  onChange: (apis: CommercialAPI[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedIds = useMemo(() => new Set(selected.map(a => a.id)), [selected]);
+
+  // Group available APIs by category for the picker
+  const grouped = useMemo(() => {
+    const map = new Map<string, CommercialAPI[]>();
+    available.forEach(api => {
+      const list = map.get(api.category) || [];
+      list.push(api);
+      map.set(api.category, list);
+    });
+    return Array.from(map.entries());
+  }, [available]);
+
+  const toggle = (api: CommercialAPI) => {
+    if (selectedIds.has(api.id)) {
+      onChange(selected.filter(a => a.id !== api.id));
+    } else {
+      onChange([...selected, api]);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          role="combobox"
+          aria-expanded={open}
+          className="h-8 text-xs gap-1.5 justify-between min-w-[180px]"
+        >
+          <span className="truncate">
+            {selected.length === 0
+              ? 'Add APIs…'
+              : `${selected.length} API${selected.length === 1 ? '' : 's'} selected`}
+          </span>
+          <ChevronsUpDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[340px] p-0" align="end">
+        <Command>
+          <CommandInput placeholder="Search APIs…" className="h-9 text-xs" />
+          <CommandList className="max-h-[320px]">
+            <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
+              No APIs found.
+            </CommandEmpty>
+            {grouped.map(([category, list]) => (
+              <CommandGroup key={category} heading={category}>
+                {list.map(api => {
+                  const isSelected = selectedIds.has(api.id);
+                  return (
+                    <CommandItem
+                      key={api.id}
+                      value={`${category} ${api.name}`}
+                      onSelect={() => toggle(api)}
+                      className="text-xs gap-2"
+                    >
+                      <div
+                        className={cn(
+                          'flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'opacity-50',
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <span className="flex-1 truncate">{api.name}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
