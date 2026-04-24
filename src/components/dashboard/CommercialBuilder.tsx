@@ -983,7 +983,7 @@ function ProposalPreview(p: PreviewProps) {
             hidden: p.minMonthlyHidden,
           },
         ].filter(r => !r.hidden);
-        const extras = (p.extraFees || []).filter(f => !f.hidden && f.text.trim().length > 0);
+        const extras = (p.extraFees || []).filter(f => !f.hidden && (f.text ?? '').trim().length > 0);
         if (builtIn.length === 0 && extras.length === 0) return null;
         return (
           <div className="border-t border-border">
