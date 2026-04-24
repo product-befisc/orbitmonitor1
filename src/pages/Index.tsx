@@ -348,6 +348,10 @@ const Index = () => {
         <TabsContent value="api-docs" className="mt-0">
           <APIDocsTab />
         </TabsContent>
+
+        <TabsContent value="commercials" className="mt-0">
+          <CommercialsTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
