@@ -433,22 +433,57 @@ export function CommercialBuilder({
 
               {/* Section 2 — Fees */}
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold tracking-tight">Wallet & Fees</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold tracking-tight">Wallet & Fees</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={addExtraFee}
+                  >
+                    <Plus className="w-3 h-3" /> Add line
+                  </Button>
+                </div>
 
-                <div className="rounded-md border border-border p-3 space-y-2">
-                  <Label className="text-xs">One-Time Wallet Recharge (INR)</Label>
+                <div
+                  className={cn(
+                    'rounded-md border border-border p-3 space-y-2 transition-opacity',
+                    walletHidden && 'opacity-50',
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">One-Time Wallet Recharge (INR)</Label>
+                    <button
+                      type="button"
+                      onClick={() => setWalletHidden(v => !v)}
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      title={walletHidden ? 'Show in proposal' : 'Hide from proposal'}
+                    >
+                      {walletHidden ? (
+                        <>
+                          <EyeOff className="w-3 h-3" /> Hidden
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3 h-3" /> Visible
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <Input
                     type="number"
                     min={0}
                     value={walletRecharge}
                     onChange={e => setWalletRecharge(Number(e.target.value) || 0)}
                     className="h-9 text-sm"
+                    disabled={walletHidden}
                   />
                   <Label className="text-xs">Wallet Note</Label>
                   <Textarea
                     value={walletRechargeNote}
                     onChange={e => setWalletRechargeNote(e.target.value)}
                     className="text-xs min-h-[60px]"
+                    disabled={walletHidden}
                   />
                 </div>
 
@@ -460,6 +495,8 @@ export function CommercialBuilder({
                     setVal: setSetupFees,
                     waived: setupFeesWaived,
                     setWaived: setSetupFeesWaived,
+                    hidden: setupFeesHidden,
+                    setHidden: setSetupFeesHidden,
                   },
                   {
                     key: 'amc',
@@ -468,6 +505,8 @@ export function CommercialBuilder({
                     setVal: setAmcFees,
                     waived: amcWaived,
                     setWaived: setAmcWaived,
+                    hidden: amcHidden,
+                    setHidden: setAmcHidden,
                   },
                   {
                     key: 'min',
@@ -476,18 +515,47 @@ export function CommercialBuilder({
                     setVal: setMinMonthly,
                     waived: minMonthlyWaived,
                     setWaived: setMinMonthlyWaived,
+                    hidden: minMonthlyHidden,
+                    setHidden: setMinMonthlyHidden,
                   },
                 ].map(f => (
-                  <div key={f.key} className="rounded-md border border-border p-3">
-                    <div className="flex items-center justify-between mb-1.5">
+                  <div
+                    key={f.key}
+                    className={cn(
+                      'rounded-md border border-border p-3 transition-opacity',
+                      f.hidden && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                       <Label className="text-xs">{f.label} (INR)</Label>
-                      <div className="flex items-center gap-1.5">
-                        <Switch
-                          checked={f.waived}
-                          onCheckedChange={f.setWaived}
-                          className="scale-75"
-                        />
-                        <span className="text-[10px] text-muted-foreground">Not Applicable</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            checked={f.waived}
+                            onCheckedChange={f.setWaived}
+                            className="scale-75"
+                            disabled={f.hidden}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            Not Applicable
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => f.setHidden(v => !v)}
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                          title={f.hidden ? 'Show in proposal' : 'Hide from proposal'}
+                        >
+                          {f.hidden ? (
+                            <>
+                              <EyeOff className="w-3 h-3" /> Hidden
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3 h-3" /> Visible
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                     <Input
@@ -496,6 +564,81 @@ export function CommercialBuilder({
                       value={f.val}
                       onChange={e => f.setVal(Number(e.target.value) || 0)}
                       className="h-9 text-sm"
+                      disabled={f.hidden}
+                    />
+                  </div>
+                ))}
+
+                {/* Custom extra fee lines */}
+                {extraFees.map(f => (
+                  <div
+                    key={f.id}
+                    className={cn(
+                      'rounded-md border border-dashed border-border p-3 space-y-2 transition-opacity',
+                      f.hidden && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Input
+                        value={f.label}
+                        onChange={e => updateExtraFee(f.id, { label: e.target.value })}
+                        placeholder="Line label (e.g. Onboarding Fee)"
+                        className="h-8 text-xs flex-1 min-w-[160px] font-medium"
+                      />
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            checked={f.waived}
+                            onCheckedChange={c => updateExtraFee(f.id, { waived: c })}
+                            className="scale-75"
+                            disabled={f.hidden}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            Not Applicable
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateExtraFee(f.id, { hidden: !f.hidden })}
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          {f.hidden ? (
+                            <>
+                              <EyeOff className="w-3 h-3" /> Hidden
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3 h-3" /> Visible
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeExtraFee(f.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Remove line"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={f.amount}
+                      onChange={e =>
+                        updateExtraFee(f.id, { amount: Number(e.target.value) || 0 })
+                      }
+                      className="h-9 text-sm"
+                      placeholder="Amount (INR)"
+                      disabled={f.hidden}
+                    />
+                    <Textarea
+                      value={f.note ?? ''}
+                      onChange={e => updateExtraFee(f.id, { note: e.target.value })}
+                      placeholder="Optional note (shown below the line in proposal)"
+                      className="text-xs min-h-[44px]"
+                      disabled={f.hidden}
                     />
                   </div>
                 ))}
