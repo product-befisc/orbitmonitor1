@@ -36,7 +36,7 @@ export function ClientSupportTicketsTab({ client }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-40">Date</TableHead>
-            <TableHead>Query Summary</TableHead>
+            <TableHead>Issue Summary</TableHead>
             <TableHead className="w-32">Status</TableHead>
           </TableRow>
         </TableHeader>
