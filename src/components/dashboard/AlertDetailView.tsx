@@ -1,9 +1,13 @@
-import { ArrowLeft, AlertTriangle, Activity, TrendingUp, TrendingDown, ChevronRight, Shield } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Activity, TrendingUp, TrendingDown, ChevronRight, Shield, Flag, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { APIData } from '@/lib/mockData';
+import { getClientIPs, hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 
 interface AlertDetailViewProps {
   apis: APIData[];
@@ -25,6 +29,10 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
   const warningClients = new Set(warningAPIs.map(a => a.client)).size;
   const criticalClients = new Set(criticalAPIs.map(a => a.client)).size;
   const allClients = new Set(allAlertAPIs.map(a => a.client)).size;
+
+  // Unique clients across all APIs to check IP whitelist status
+  const uniqueClients = Array.from(new Set(apis.map(a => a.client)));
+  const flaggedClients = uniqueClients.filter(c => hasNonWhitelistedIP(c)).sort();
 
   const renderAPIList = (filteredAPIs: APIData[], isWarning?: boolean) => {
     const clientGroups = new Map<string, APIData[]>();
@@ -155,7 +163,7 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
         </div>
       </div>
 
-      {/* Tabs: All / Critical / Warning */}
+      {/* Tabs: All / Critical / Warning / IP Whitelist */}
       <Tabs defaultValue="all">
         <TabsList className="mb-4">
           <TabsTrigger value="all">All ({allAlertAPIs.length})</TabsTrigger>
@@ -164,6 +172,10 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
           </TabsTrigger>
           <TabsTrigger value="warning" className="gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" /> Warning ({warningAPIs.length})
+          </TabsTrigger>
+          <TabsTrigger value="ips" className="gap-1.5">
+            <Flag className={cn('w-3.5 h-3.5', flaggedClients.length > 0 && 'text-destructive')} />
+            IP Whitelist ({flaggedClients.length})
           </TabsTrigger>
         </TabsList>
 
@@ -176,7 +188,87 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
         <TabsContent value="warning">
           {renderAPIList(warningAPIs, true)}
         </TabsContent>
+        <TabsContent value="ips">
+          <IPWhitelistAlerts flaggedClients={flaggedClients} />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function IPWhitelistAlerts({ flaggedClients }: { flaggedClients: string[] }) {
+  const [openClient, setOpenClient] = useState<string | null>(null);
+
+  if (flaggedClients.length === 0) {
+    return (
+      <div className="glass-card p-12 text-center">
+        <Flag className="w-8 h-8 mx-auto mb-3 text-success" />
+        <p className="text-muted-foreground">All clients have their IPs whitelisted.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card divide-y divide-border">
+      {flaggedClients.map(client => {
+        const ips = getClientIPs(client);
+        const nonWhitelisted = ips.filter(i => !i.whitelisted);
+        const isOpen = openClient === client;
+        return (
+          <Collapsible
+            key={client}
+            open={isOpen}
+            onOpenChange={(o) => setOpenClient(o ? client : null)}
+          >
+            <CollapsibleTrigger className="w-full p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors text-left">
+              <Flag className="w-4 h-4 text-destructive flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{client}</p>
+                <p className="text-xs text-muted-foreground">
+                  {nonWhitelisted.length} of {ips.length} IP{ips.length > 1 ? 's' : ''} not whitelisted
+                </p>
+              </div>
+              <Badge variant="destructive" className="gap-1">
+                {nonWhitelisted.length} flagged
+              </Badge>
+              <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', isOpen && 'rotate-180')} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>Label</TableHead>
+                    <TableHead>Added On</TableHead>
+                    <TableHead className="w-40">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ips.map(entry => (
+                    <TableRow key={entry.ip}>
+                      <TableCell className="font-mono text-sm">{entry.ip}</TableCell>
+                      <TableCell className="text-sm">{entry.label}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{entry.addedOn}</TableCell>
+                      <TableCell>
+                        {entry.whitelisted ? (
+                          <Badge variant="outline" className="border-success/50 text-success">
+                            Whitelisted
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="gap-1">
+                            <Flag className="w-3 h-3" />
+                            Not Whitelisted
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
     </div>
   );
 }
