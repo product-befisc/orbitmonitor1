@@ -189,7 +189,7 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
           {renderAPIList(warningAPIs, true)}
         </TabsContent>
         <TabsContent value="ips">
-          <IPWhitelistAlerts flaggedClients={flaggedClients} />
+          <IPWhitelistAlerts flaggedClients={flaggedClients} totalClients={uniqueClients.length} />
         </TabsContent>
       </Tabs>
     </div>
