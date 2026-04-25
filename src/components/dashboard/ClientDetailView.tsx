@@ -1,8 +1,12 @@
-import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UsageChart } from './UsageChart';
 import { ClientAPIDateTable } from './ClientAPIDateTable';
+import { ClientSupportTicketsTab } from './ClientSupportTicketsTab';
+import { ClientIPWhitelistTab } from './ClientIPWhitelistTab';
 import { ClientUsageData, APIData } from '@/lib/mockData';
+import { hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 import { cn } from '@/lib/utils';
 
 interface ClientDetailViewProps {
@@ -107,6 +111,27 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI }
       {/* Date-wise API Breakdown Table */}
       <div className="glass-card mt-6 p-5">
         <ClientAPIDateTable apis={sortedAPIs} />
+      </div>
+
+      {/* Sub-tabs: Support Tickets + IP Whitelist */}
+      <div className="glass-card mt-6 p-5">
+        <Tabs defaultValue="tickets" className="w-full">
+          <TabsList>
+            <TabsTrigger value="tickets">Support Tickets</TabsTrigger>
+            <TabsTrigger value="ips" className="gap-2">
+              IP Whitelist
+              {hasNonWhitelistedIP(clientData.client) && (
+                <Flag className="w-3.5 h-3.5 text-destructive" />
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="tickets" className="mt-4">
+            <ClientSupportTicketsTab client={clientData.client} />
+          </TabsContent>
+          <TabsContent value="ips" className="mt-4">
+            <ClientIPWhitelistTab client={clientData.client} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
