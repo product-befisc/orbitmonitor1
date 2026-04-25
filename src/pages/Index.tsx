@@ -23,6 +23,7 @@ import { NonOnboardedClientsCard } from '@/components/dashboard/NonOnboardedClie
 import { ZeroHitAPIsCard } from '@/components/dashboard/ZeroHitAPIsCard';
 import { toast } from '@/hooks/use-toast';
 import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
+import { hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 
 type DashboardView =
   | { type: 'overview' }
@@ -239,6 +240,8 @@ const Index = () => {
 
   // Overview
   const alertCount = filteredStats.warningCount + filteredStats.criticalCount;
+  const uniqueClientsForAlerts = Array.from(new Set(filteredAPIs.map(a => a.client)));
+  const ipFlaggedClientCount = uniqueClientsForAlerts.filter(c => hasNonWhitelistedIP(c)).length;
 
   return renderWithHeader(
     <div className="p-4 md:p-6 space-y-6">
@@ -274,11 +277,11 @@ const Index = () => {
             />
             <MetricCard
               title="Alerts"
-              value={alertCount}
-              subtitle={`${filteredStats.criticalCount} critical · ${filteredStats.warningCount} warning`}
+              value={alertCount + ipFlaggedClientCount}
+              subtitle={`${filteredStats.criticalCount} critical · ${filteredStats.warningCount} warning · ${ipFlaggedClientCount} IP not whitelisted`}
               icon={<AlertTriangle className="w-5 h-5" />}
-              status={filteredStats.criticalCount > 0 ? 'critical' : filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
-              onClick={alertCount > 0 ? () => setView({ type: 'alert-detail' }) : undefined}
+              status={filteredStats.criticalCount > 0 || ipFlaggedClientCount > 0 ? 'critical' : filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
+              onClick={(alertCount + ipFlaggedClientCount) > 0 ? () => setView({ type: 'alert-detail' }) : undefined}
             />
             <MetricCard
               title="Revenue Loss"
