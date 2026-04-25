@@ -30,6 +30,10 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
   const criticalClients = new Set(criticalAPIs.map(a => a.client)).size;
   const allClients = new Set(allAlertAPIs.map(a => a.client)).size;
 
+  // Unique clients across all APIs to check IP whitelist status
+  const uniqueClients = Array.from(new Set(apis.map(a => a.client)));
+  const flaggedClients = uniqueClients.filter(c => hasNonWhitelistedIP(c)).sort();
+
   const renderAPIList = (filteredAPIs: APIData[], isWarning?: boolean) => {
     const clientGroups = new Map<string, APIData[]>();
     filteredAPIs.forEach(api => {
