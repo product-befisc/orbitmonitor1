@@ -288,6 +288,7 @@ function IPWhitelistAlerts({ flaggedClients, totalClients }: { flaggedClients: s
           </Collapsible>
         );
       })}
+      </div>
     </div>
   );
 }
