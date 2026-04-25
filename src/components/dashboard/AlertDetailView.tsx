@@ -1,9 +1,13 @@
-import { ArrowLeft, AlertTriangle, Activity, TrendingUp, TrendingDown, ChevronRight, Shield } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Activity, TrendingUp, TrendingDown, ChevronRight, Shield, Flag, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { APIData } from '@/lib/mockData';
+import { getClientIPs, hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 
 interface AlertDetailViewProps {
   apis: APIData[];
