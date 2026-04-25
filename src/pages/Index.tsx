@@ -23,6 +23,7 @@ import { NonOnboardedClientsCard } from '@/components/dashboard/NonOnboardedClie
 import { ZeroHitAPIsCard } from '@/components/dashboard/ZeroHitAPIsCard';
 import { toast } from '@/hooks/use-toast';
 import type { GlobalFilterState } from '@/components/dashboard/GlobalFilters';
+import { hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 
 type DashboardView =
   | { type: 'overview' }
