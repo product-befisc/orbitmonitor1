@@ -277,11 +277,11 @@ const Index = () => {
             />
             <MetricCard
               title="Alerts"
-              value={alertCount}
-              subtitle={`${filteredStats.criticalCount} critical · ${filteredStats.warningCount} warning`}
+              value={alertCount + ipFlaggedClientCount}
+              subtitle={`${filteredStats.criticalCount} critical · ${filteredStats.warningCount} warning · ${ipFlaggedClientCount} IP not whitelisted`}
               icon={<AlertTriangle className="w-5 h-5" />}
-              status={filteredStats.criticalCount > 0 ? 'critical' : filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
-              onClick={alertCount > 0 ? () => setView({ type: 'alert-detail' }) : undefined}
+              status={filteredStats.criticalCount > 0 || ipFlaggedClientCount > 0 ? 'critical' : filteredStats.warningCount > 0 ? 'warning' : 'neutral'}
+              onClick={(alertCount + ipFlaggedClientCount) > 0 ? () => setView({ type: 'alert-detail' }) : undefined}
             />
             <MetricCard
               title="Revenue Loss"
