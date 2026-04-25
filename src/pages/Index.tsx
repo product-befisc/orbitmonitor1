@@ -239,6 +239,8 @@ const Index = () => {
 
   // Overview
   const alertCount = filteredStats.warningCount + filteredStats.criticalCount;
+  const uniqueClientsForAlerts = Array.from(new Set(filteredAPIs.map(a => a.client)));
+  const ipFlaggedClientCount = uniqueClientsForAlerts.filter(c => hasNonWhitelistedIP(c)).length;
 
   return renderWithHeader(
     <div className="p-4 md:p-6 space-y-6">
