@@ -196,8 +196,9 @@ export function AlertDetailView({ apis, onBack, onSelectAPI }: AlertDetailViewPr
   );
 }
 
-function IPWhitelistAlerts({ flaggedClients }: { flaggedClients: string[] }) {
+function IPWhitelistAlerts({ flaggedClients, totalClients }: { flaggedClients: string[]; totalClients: number }) {
   const [openClient, setOpenClient] = useState<string | null>(null);
+  const pct = totalClients > 0 ? (flaggedClients.length / totalClients) * 100 : 0;
 
   if (flaggedClients.length === 0) {
     return (
@@ -209,7 +210,25 @@ function IPWhitelistAlerts({ flaggedClients }: { flaggedClients: string[] }) {
   }
 
   return (
-    <div className="glass-card divide-y divide-border">
+    <div className="space-y-4">
+      <div className="glass-card p-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Clients with non-whitelisted IPs</p>
+          <p className="text-2xl font-semibold">
+            {flaggedClients.length} <span className="text-base text-muted-foreground font-normal">of {totalClients}</span>
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Non-compliance</p>
+          <p className={cn(
+            'text-3xl font-semibold',
+            pct >= 30 ? 'text-destructive' : pct >= 10 ? 'text-warning' : 'text-foreground'
+          )}>
+            {pct.toFixed(1)}%
+          </p>
+        </div>
+      </div>
+      <div className="glass-card divide-y divide-border">
       {flaggedClients.map(client => {
         const ips = getClientIPs(client);
         const nonWhitelisted = ips.filter(i => !i.whitelisted);
