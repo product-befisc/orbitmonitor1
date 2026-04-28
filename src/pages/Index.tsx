@@ -16,6 +16,7 @@ import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
 import { ComparisonTab } from '@/components/dashboard/ComparisonTab';
 import { APIDocsTab } from '@/components/dashboard/APIDocsTab';
 import { CommercialsTab } from '@/components/dashboard/CommercialsTab';
+import { SupportTicketsTab } from '@/components/dashboard/SupportTicketsTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mockAPIs, getAggregatedStats, getClientUsageData } from '@/lib/mockData';
 import { generateDailyReport } from '@/lib/reportGenerator';
@@ -251,6 +252,7 @@ const Index = () => {
           <TabsTrigger value="comparison">Comparison</TabsTrigger>
           <TabsTrigger value="api-docs">API Docs</TabsTrigger>
           <TabsTrigger value="commercials">Commercial Builder</TabsTrigger>
+          <TabsTrigger value="support-tickets">Support Tickets</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-0">
@@ -354,6 +356,10 @@ const Index = () => {
 
         <TabsContent value="commercials" className="mt-0">
           <CommercialsTab />
+        </TabsContent>
+
+        <TabsContent value="support-tickets" className="mt-0">
+          <SupportTicketsTab />
         </TabsContent>
       </Tabs>
     </div>
