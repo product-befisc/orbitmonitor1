@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
-import { mockTickets, type SupportTicket } from '@/lib/mockTickets';
+import { mockTickets, formatSLA, type SupportTicket } from '@/lib/mockTickets';
 import { cn } from '@/lib/utils';
 
 const statusVariant: Record<string, 'secondary' | 'default' | 'outline'> = {
