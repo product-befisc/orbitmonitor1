@@ -92,11 +92,35 @@ export function UsageChart({ dailyData, weeklyData, monthlyData, title = 'API Us
   const prevKey = timeRange === 'monthly' ? 'previousYear' : 'previousCalls';
   const prevLabel = timeRange === 'monthly' ? 'Previous Year' : 'Previous Period';
 
+  const trendPct = useMemo(() => {
+    const currentTotal = data.reduce((s: number, d: any) => s + (d.calls || 0), 0);
+    const previousTotal = data.reduce((s: number, d: any) => s + (d[prevKey] || 0), 0);
+    if (previousTotal === 0) return null;
+    return ((currentTotal - previousTotal) / previousTotal) * 100;
+  }, [data, prevKey]);
+
+  const trendLabel = timeRange === 'monthly' ? 'vs prev year' : 'vs prev period';
+
   return (
     <div className="glass-card p-5 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        
+        <div className="flex items-center gap-3 flex-wrap">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          {trendPct !== null && (
+            <div className={cn(
+              'flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium',
+              trendPct > 0 ? 'bg-success/10 text-success' :
+              trendPct < -10 ? 'bg-destructive/10 text-destructive' :
+              trendPct < 0 ? 'bg-warning/10 text-warning' :
+              'bg-muted text-muted-foreground'
+            )}>
+              {trendPct >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+              {trendPct >= 0 ? '+' : ''}{trendPct.toFixed(1)}%
+              <span className="text-xs opacity-70 ml-1">{trendLabel}</span>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex bg-muted rounded-lg p-1">
             {(['daily', 'weekly', 'monthly'] as TimeRange[]).map((range) => (
