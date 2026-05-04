@@ -276,30 +276,38 @@ export function SupportTicketsTab() {
                 <TableHead className="w-28">Date</TableHead>
                 <TableHead className="w-24">Time</TableHead>
                 <TableHead className="w-32">Status</TableHead>
+                <TableHead className="w-40">SLA (resolution)</TableHead>
                 <TableHead className="w-56">Created By</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(t => (
-                <TableRow
-                  key={t.id}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedId(t.id)}
-                >
-                  <TableCell className="font-medium">{t.id}</TableCell>
-                  <TableCell>{t.client}</TableCell>
-                  <TableCell className="text-muted-foreground">{t.category}</TableCell>
-                  <TableCell className="text-muted-foreground">{t.date}</TableCell>
-                  <TableCell className="text-muted-foreground">{t.time}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[t.status]}>{t.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{t.createdBy}</TableCell>
-                </TableRow>
-              ))}
+              {filtered.map(t => {
+                const sla = formatSLA(t);
+                const isResolved = t.status === 'CLOSED';
+                return (
+                  <TableRow
+                    key={t.id}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedId(t.id)}
+                  >
+                    <TableCell className="font-medium">{t.id}</TableCell>
+                    <TableCell>{t.client}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.category}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.date}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.time}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[t.status]}>{t.status}</Badge>
+                    </TableCell>
+                    <TableCell className={isResolved ? 'text-foreground font-medium text-sm' : 'text-muted-foreground italic text-sm'}>
+                      {sla}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{t.createdBy}</TableCell>
+                  </TableRow>
+                );
+              })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-10">
                     No tickets match the current filters.
                   </TableCell>
                 </TableRow>
