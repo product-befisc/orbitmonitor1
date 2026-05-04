@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import {
   AreaChart,
   Area,
