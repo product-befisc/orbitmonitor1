@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockTickets } from '@/lib/mockTickets';
+import { mockTickets, formatSLA } from '@/lib/mockTickets';
 
 interface Props {
   client: string;
