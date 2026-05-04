@@ -8,6 +8,23 @@ export interface SupportTicket {
   createdBy: string;
   aiSummary: string;
   chatDescription: string;
+  /** Resolution time in minutes. Only set for CLOSED tickets. */
+  slaResolutionMinutes?: number;
+}
+
+/** Format SLA for display in tables. */
+export function formatSLA(ticket: Pick<SupportTicket, 'status' | 'slaResolutionMinutes'>): string {
+  if (ticket.status !== 'CLOSED' || ticket.slaResolutionMinutes == null) {
+    return 'Not generated yet';
+  }
+  const mins = ticket.slaResolutionMinutes;
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remMin = mins % 60;
+  if (hours < 24) return remMin ? `${hours}h ${remMin}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours ? `${days}d ${remHours}h` : `${days}d`;
 }
 
 const clients = [
