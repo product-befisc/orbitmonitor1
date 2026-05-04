@@ -8,6 +8,23 @@ export interface SupportTicket {
   createdBy: string;
   aiSummary: string;
   chatDescription: string;
+  /** Resolution time in minutes. Only set for CLOSED tickets. */
+  slaResolutionMinutes?: number;
+}
+
+/** Format SLA for display in tables. */
+export function formatSLA(ticket: Pick<SupportTicket, 'status' | 'slaResolutionMinutes'>): string {
+  if (ticket.status !== 'CLOSED' || ticket.slaResolutionMinutes == null) {
+    return 'Not generated yet';
+  }
+  const mins = ticket.slaResolutionMinutes;
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remMin = mins % 60;
+  if (hours < 24) return remMin ? `${hours}h ${remMin}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours ? `${days}d ${remHours}h` : `${days}d`;
 }
 
 const clients = [
@@ -62,16 +79,22 @@ function generateTickets(): SupportTicket[] {
     const hours = 8 + Math.floor(Math.random() * 14);
     const minutes = Math.floor(Math.random() * 60);
 
+    const status: SupportTicket['status'] = i < 100 ? 'OPEN' : i < 110 ? 'IN_PROGRESS' : 'CLOSED';
+    // Deterministic SLA for closed tickets: 30 mins to ~3 days
+    const slaResolutionMinutes =
+      status === 'CLOSED' ? 30 + ((i * 137) % (3 * 24 * 60)) : undefined;
+
     tickets.push({
       id: `OS-${(94 - i + 113).toString()}`,
       client: clients[i % clients.length],
       category: categories[i % categories.length],
       date: date.toISOString().split('T')[0],
       time: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`,
-      status: i < 100 ? 'OPEN' : i < 110 ? 'IN_PROGRESS' : 'CLOSED',
+      status,
       createdBy: creators[i % creators.length],
       aiSummary: summaries[i % summaries.length],
       chatDescription: chatDescriptions[i % chatDescriptions.length],
+      slaResolutionMinutes,
     });
   }
 
