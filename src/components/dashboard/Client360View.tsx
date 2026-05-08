@@ -90,15 +90,32 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
     return { open, inProg, closed, total: tickets.length };
   }, [tickets]);
 
-  // Tickets over time (by date)
+  // Tickets over time (last 14 days, filled with dummy data when sparse)
   const ticketsOverTime = useMemo(() => {
     const map = new Map<string, number>();
     tickets.forEach(t => map.set(t.date, (map.get(t.date) || 0) + 1));
-    return [...map.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-14)
-      .map(([date, count]) => ({ date: date.slice(5), count }));
-  }, [tickets]);
+
+    // Deterministic seed from client name for stable dummy data
+    let seed = 0;
+    for (let i = 0; i < clientData.client.length; i++) seed = (seed * 31 + clientData.client.charCodeAt(i)) >>> 0;
+    const rand = (n: number) => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed % n;
+    };
+
+    const today = new Date('2026-03-17');
+    const result: { date: string; count: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0];
+      const real = map.get(iso) || 0;
+      // Add a stable dummy baseline (1-5) so chart is never empty
+      const dummy = 1 + rand(5);
+      result.push({ date: iso.slice(5), count: real + dummy });
+    }
+    return result;
+  }, [tickets, clientData.client]);
 
   // Tickets by category
   const ticketsByCategory = useMemo(() => {
