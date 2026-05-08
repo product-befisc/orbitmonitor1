@@ -1,4 +1,4 @@
-import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight, Flag } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight, Flag, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UsageChart } from './UsageChart';
@@ -14,9 +14,10 @@ interface ClientDetailViewProps {
   clientAPIs: APIData[];
   onBack: () => void;
   onSelectAPI: (apiId: string) => void;
+  onOpen360?: () => void;
 }
 
-export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI }: ClientDetailViewProps) {
+export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, onOpen360 }: ClientDetailViewProps) {
   const formatCalls = (calls: number) => {
     if (calls >= 1000000) return `${(calls / 1000000).toFixed(1)}M`;
     if (calls >= 1000) return `${(calls / 1000).toFixed(1)}K`;
@@ -39,7 +40,18 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI }
               {clientData.apiCount} APIs • {formatCalls(clientData.totalCalls)} total calls
             </p>
           </div>
-          <TabsList className="ml-auto">
+          {onOpen360 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onOpen360}
+              className="ml-auto gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              360° View
+            </Button>
+          )}
+          <TabsList className={onOpen360 ? '' : 'ml-auto'}>
             <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="tickets">Support Tickets</TabsTrigger>
             <TabsTrigger value="ips" className="gap-2">

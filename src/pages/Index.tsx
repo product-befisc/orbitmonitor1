@@ -6,6 +6,7 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { UsageChart, type UsageSource } from '@/components/dashboard/UsageChart';
 import { ClientList } from '@/components/dashboard/ClientList';
 import { ClientDetailView } from '@/components/dashboard/ClientDetailView';
+import { Client360View } from '@/components/dashboard/Client360View';
 import { APIRankingList } from '@/components/dashboard/APIRankingList';
 import { APIDetailPanel } from '@/components/dashboard/APIDetailPanel';
 import { AlertDetailView } from '@/components/dashboard/AlertDetailView';
@@ -29,6 +30,7 @@ import { hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 type DashboardView =
   | { type: 'overview' }
   | { type: 'client-detail'; clientName: string }
+  | { type: 'client-360'; clientName: string }
   | { type: 'api-detail'; apiId: string; fromClient?: string; fromAlert?: boolean }
   | { type: 'alert-detail' }
   | { type: 'revenue-detail' };
@@ -215,6 +217,22 @@ const Index = () => {
         clientAPIs={clientAPIs}
         onBack={() => setView({ type: 'overview' })}
         onSelectAPI={(apiId) => setView({ type: 'api-detail', apiId, fromClient: view.clientName })}
+        onOpen360={() => setView({ type: 'client-360', clientName: view.clientName })}
+      />
+    );
+  }
+
+  // Client 360° view
+  if (view.type === 'client-360') {
+    const client = clientData.find(c => c.client === view.clientName);
+    if (!client) return null;
+    const clientAPIs = mockAPIs.filter(a => a.client === view.clientName);
+    return renderWithHeader(
+      <Client360View
+        clientData={client}
+        clientAPIs={clientAPIs}
+        allAPIs={mockAPIs}
+        onBack={() => setView({ type: 'client-detail', clientName: view.clientName })}
       />
     );
   }
