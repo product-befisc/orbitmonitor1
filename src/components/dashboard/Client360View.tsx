@@ -300,27 +300,94 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
         </div>
       </div>
 
-      {/* Row 4: Unused APIs (opportunity) */}
+      {/* Row 4: Used vs Unused APIs — bifurcation for sales push clarity */}
       <div className="glass-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="w-4 h-4 text-warning" />
-          <h3 className="font-semibold">Untapped APIs — Cross-sell Opportunities</h3>
-          <Badge variant="outline" className="ml-2">{unusedCount}</Badge>
-        </div>
-        {unusedCount === 0 ? (
-          <p className="text-sm text-muted-foreground">Client uses all available APIs. 🎉</p>
-        ) : (
-          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-            {apiCatalog
-              .filter(n => !usedNames.has(n))
-              .slice(0, 60)
-              .map(name => (
-                <span key={name} className="px-2.5 py-1 text-xs rounded-md bg-muted text-muted-foreground border border-border">
-                  {name}
-                </span>
-              ))}
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="font-semibold">API Bifurcation — Used vs Unused</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Clear picture of what's adopted and what to push next
+            </p>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-success/50 text-success">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Used {usedCount}
+            </Badge>
+            <Badge variant="outline" className="border-warning/50 text-warning">
+              <AlertTriangle className="w-3 h-3 mr-1" /> Push {unusedCount}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* USED side */}
+          <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-success" />
+                <span className="font-semibold text-sm">Currently Used</span>
+              </div>
+              <Badge variant="secondary">{usedCount}</Badge>
+            </div>
+            {usedCount === 0 ? (
+              <p className="text-sm text-muted-foreground">No APIs adopted yet.</p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                {[...clientAPIs]
+                  .sort((a, b) => b.currentCalls - a.currentCalls)
+                  .map(api => (
+                    <div
+                      key={api.name}
+                      className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-background/60 border border-border/50 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={cn(
+                          'w-1.5 h-1.5 rounded-full shrink-0',
+                          api.status === 'healthy' && 'bg-success',
+                          api.status === 'warning' && 'bg-warning',
+                          api.status === 'critical' && 'bg-destructive'
+                        )} />
+                        <span className="font-medium truncate">{api.name}</span>
+                      </div>
+                      <span className="text-muted-foreground tabular-nums shrink-0">
+                        {formatCalls(api.currentCalls)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* UNUSED / PUSH side */}
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-warning" />
+                <span className="font-semibold text-sm">To Push — Cross-sell</span>
+              </div>
+              <Badge variant="secondary">{unusedCount}</Badge>
+            </div>
+            {unusedCount === 0 ? (
+              <p className="text-sm text-muted-foreground">Client uses all available APIs. 🎉</p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                {apiCatalog
+                  .filter(n => !usedNames.has(n))
+                  .map(name => (
+                    <div
+                      key={name}
+                      className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-background/60 border border-border/50 text-xs"
+                    >
+                      <span className="font-medium truncate">{name}</span>
+                      <Badge variant="outline" className="text-[10px] border-warning/40 text-warning shrink-0">
+                        Opportunity
+                      </Badge>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
