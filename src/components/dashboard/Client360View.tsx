@@ -57,6 +57,30 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
     { name: 'Unused', value: unusedCount },
   ];
 
+  // Peer-based recommendations: "Customers also use"
+  const recommendations = useMemo(() => {
+    const peerCount = new Map<string, { clients: Set<string>; calls: number }>();
+    allAPIs.forEach(a => {
+      if (a.client === clientData.client) return;
+      if (usedNames.has(a.name)) return; // only recommend things this client doesn't use
+      if (!peerCount.has(a.name)) peerCount.set(a.name, { clients: new Set(), calls: 0 });
+      const entry = peerCount.get(a.name)!;
+      entry.clients.add(a.client);
+      entry.calls += a.currentCalls;
+    });
+    const totalPeers = new Set(allAPIs.map(a => a.client).filter(c => c !== clientData.client)).size || 1;
+    return [...peerCount.entries()]
+      .map(([name, v]) => ({
+        name,
+        peerClients: v.clients.size,
+        peerCalls: v.calls,
+        adoptionPct: Math.round((v.clients.size / totalPeers) * 100),
+        topClients: [...v.clients].slice(0, 3),
+      }))
+      .sort((a, b) => b.peerClients - a.peerClients || b.peerCalls - a.peerCalls)
+      .slice(0, 6);
+  }, [allAPIs, usedNames, clientData.client]);
+
   // Volume by API (top 8)
   const volumeByAPI = useMemo(
     () =>
