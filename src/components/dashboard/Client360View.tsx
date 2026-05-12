@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket, Users, Sparkles } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
