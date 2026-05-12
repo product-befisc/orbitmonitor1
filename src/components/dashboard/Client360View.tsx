@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket, Users, Sparkles } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, RadialBarChart, RadialBar,
