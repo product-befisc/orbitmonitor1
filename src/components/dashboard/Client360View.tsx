@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket, Users, Sparkles } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, RadialBarChart, RadialBar,
@@ -56,6 +56,30 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
     { name: 'Used', value: usedCount },
     { name: 'Unused', value: unusedCount },
   ];
+
+  // Peer-based recommendations: "Customers also use"
+  const recommendations = useMemo(() => {
+    const peerCount = new Map<string, { clients: Set<string>; calls: number }>();
+    allAPIs.forEach(a => {
+      if (a.client === clientData.client) return;
+      if (usedNames.has(a.name)) return; // only recommend things this client doesn't use
+      if (!peerCount.has(a.name)) peerCount.set(a.name, { clients: new Set(), calls: 0 });
+      const entry = peerCount.get(a.name)!;
+      entry.clients.add(a.client);
+      entry.calls += a.currentCalls;
+    });
+    const totalPeers = new Set(allAPIs.map(a => a.client).filter(c => c !== clientData.client)).size || 1;
+    return [...peerCount.entries()]
+      .map(([name, v]) => ({
+        name,
+        peerClients: v.clients.size,
+        peerCalls: v.calls,
+        adoptionPct: Math.round((v.clients.size / totalPeers) * 100),
+        topClients: [...v.clients].slice(0, 3),
+      }))
+      .sort((a, b) => b.peerClients - a.peerClients || b.peerCalls - a.peerCalls)
+      .slice(0, 6);
+  }, [allAPIs, usedNames, clientData.client]);
 
   // Volume by API (top 8)
   const volumeByAPI = useMemo(
@@ -388,6 +412,61 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
             )}
           </div>
         </div>
+      </div>
+
+      {/* Row 5: Customers also use — peer-driven recommendations */}
+      <div className="glass-card p-5 mt-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Customers Also Use</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Top APIs adopted by peer clients — sales recommendations
+              </p>
+            </div>
+          </div>
+          <Badge variant="outline" className="border-primary/40 text-primary">
+            <Users className="w-3 h-3 mr-1" /> Peer-based
+          </Badge>
+        </div>
+
+        {recommendations.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No peer recommendations available — client already uses every API peers use.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {recommendations.map((rec, idx) => (
+              <div
+                key={rec.name}
+                className="rounded-lg border border-primary/20 bg-primary/5 p-3 hover:border-primary/40 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 rounded px-1.5 py-0.5 shrink-0">
+                      #{idx + 1}
+                    </span>
+                    <span className="font-semibold text-sm truncate">{rec.name}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] shrink-0">
+                    {rec.adoptionPct}%
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" /> {rec.peerClients} peer{rec.peerClients > 1 ? 's' : ''}
+                  </span>
+                  <span className="tabular-nums">{formatCalls(rec.peerCalls)} calls</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate">
+                  Used by: <span className="text-foreground/80">{rec.topClients.join(', ')}</span>
+                  {rec.peerClients > rec.topClients.length && ` +${rec.peerClients - rec.topClients.length} more`}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
