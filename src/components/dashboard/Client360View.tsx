@@ -417,23 +417,96 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
       </div>
 
       {/* Row 5: Customers also use — peer-driven recommendations */}
-      <div className="glass-card p-5 mt-4">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Customers Also Use</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Top APIs adopted by peer clients — sales recommendations
-              </p>
+      <Recommendations recommendations={recommendations} formatCalls={formatCalls} />
+    </div>
+  );
+}
+
+function Recommendations({
+  recommendations,
+  formatCalls,
+}: {
+  recommendations: { name: string; peerClients: number; peerCalls: number; adoptionPct: number; topClients: string[] }[];
+  formatCalls: (n: number) => string;
+}) {
+  const maxVolume = useMemo(
+    () => recommendations.reduce((m, r) => Math.max(m, r.peerCalls), 0),
+    [recommendations]
+  );
+  const [threshold, setThreshold] = useState(0);
+  const filtered = useMemo(
+    () => recommendations.filter(r => r.peerCalls >= threshold),
+    [recommendations, threshold]
+  );
+
+  return (
+    <div className="glass-card p-5 mt-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Customers Also Use</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Top APIs adopted by peer clients — sales recommendations
+            </p>
+          </div>
+        </div>
+        <Badge variant="outline" className="border-primary/40 text-primary">
+          <Users className="w-3 h-3 mr-1" /> Peer-based
+        </Badge>
+      </div>
+
+      {/* Threshold control */}
+      {recommendations.length > 0 && (
+        <div className="mb-4 p-3 rounded-lg border border-border/50 bg-muted/20">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div className="text-sm font-medium">Volume threshold</div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={maxVolume}
+                value={threshold}
+                onChange={(e) => setThreshold(Math.max(0, Math.min(maxVolume, Number(e.target.value) || 0)))}
+                className="h-8 w-32 text-xs tabular-nums"
+              />
+              <span className="text-xs text-muted-foreground tabular-nums">
+                / {formatCalls(maxVolume)} max
+              </span>
             </div>
           </div>
-          <Badge variant="outline" className="border-primary/40 text-primary">
-            <Users className="w-3 h-3 mr-1" /> Peer-based
-          </Badge>
+          <Slider
+            value={[threshold]}
+            min={0}
+            max={maxVolume || 1}
+            step={Math.max(1, Math.round((maxVolume || 1) / 100))}
+            onValueChange={(v) => setThreshold(v[0])}
+          />
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>Showing {filtered.length} of {recommendations.length} APIs ≥ {formatCalls(threshold)} peer calls</span>
+            {threshold > 0 && (
+              <button
+                className="text-primary hover:underline"
+                onClick={() => setThreshold(0)}
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {recommendations.length === 0
+            ? 'No peer recommendations available — client already uses every API peers use.'
+            : 'No APIs match the current volume threshold. Lower the threshold to see more.'}
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((rec, idx) => (
 
         {recommendations.length === 0 ? (
           <p className="text-sm text-muted-foreground">No peer recommendations available — client already uses every API peers use.</p>
