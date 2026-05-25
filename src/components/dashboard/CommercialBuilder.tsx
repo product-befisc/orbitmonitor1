@@ -150,6 +150,9 @@ export function CommercialBuilder({
   onShare,
   onSave,
 }: CommercialBuilderProps) {
+  const [commercialType, setCommercialType] = useState<CommercialType>(
+    initialData?.commercialType ?? 'client',
+  );
   const [serviceProvider, setServiceProvider] = useState(
     initialData?.serviceProvider ?? 'BEFISC PRIVATE LIMITED',
   );
