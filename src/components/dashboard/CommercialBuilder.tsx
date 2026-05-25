@@ -183,6 +183,7 @@ export function CommercialBuilder({
   useEffect(() => {
     if (!open) return;
     if (initialData) {
+      setCommercialType(initialData.commercialType ?? 'client');
       setServiceProvider(initialData.serviceProvider);
       setClientName(initialData.clientName);
       setProposalDate(initialData.proposalDate);
