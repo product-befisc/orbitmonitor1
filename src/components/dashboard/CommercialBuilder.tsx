@@ -294,6 +294,7 @@ export function CommercialBuilder({
   };
 
   const collectData = (): CommercialData => ({
+    commercialType,
     serviceProvider,
     clientName,
     proposalDate,
