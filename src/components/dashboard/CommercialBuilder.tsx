@@ -379,12 +379,25 @@ export function CommercialBuilder({
                 <h3 className="text-sm font-semibold tracking-tight">Header & Client</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
+                    <Label className="text-xs mb-1.5 block">Commercial Type</Label>
+                    <Select value={commercialType} onValueChange={v => setCommercialType(v as CommercialType)}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="client">Client Commercial</SelectItem>
+                        <SelectItem value="partner">Partner's Commercial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
                     <Label className="text-xs mb-1.5 block">Service Provider</Label>
                     <Input
                       value={serviceProvider}
                       onChange={e => setServiceProvider(e.target.value)}
                       className="h-9 text-sm"
                     />
+                  </div>
                   </div>
                   <div className="col-span-2">
                     <Label className="text-xs mb-1.5 block">Client Name</Label>
