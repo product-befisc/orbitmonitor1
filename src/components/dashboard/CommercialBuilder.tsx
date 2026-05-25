@@ -398,7 +398,6 @@ export function CommercialBuilder({
                       className="h-9 text-sm"
                     />
                   </div>
-                  </div>
                   <div className="col-span-2">
                     <Label className="text-xs mb-1.5 block">Client Name</Label>
                     <Input
