@@ -62,7 +62,10 @@ export interface ExtraFee {
   hidden: boolean;
 }
 
+export type CommercialType = 'client' | 'partner';
+
 export interface CommercialData {
+  commercialType?: CommercialType;
   serviceProvider: string;
   clientName: string;
   proposalDate: Date;
@@ -147,6 +150,9 @@ export function CommercialBuilder({
   onShare,
   onSave,
 }: CommercialBuilderProps) {
+  const [commercialType, setCommercialType] = useState<CommercialType>(
+    initialData?.commercialType ?? 'client',
+  );
   const [serviceProvider, setServiceProvider] = useState(
     initialData?.serviceProvider ?? 'BEFISC PRIVATE LIMITED',
   );
@@ -177,6 +183,7 @@ export function CommercialBuilder({
   useEffect(() => {
     if (!open) return;
     if (initialData) {
+      setCommercialType(initialData.commercialType ?? 'client');
       setServiceProvider(initialData.serviceProvider);
       setClientName(initialData.clientName);
       setProposalDate(initialData.proposalDate);
@@ -287,6 +294,7 @@ export function CommercialBuilder({
   };
 
   const collectData = (): CommercialData => ({
+    commercialType,
     serviceProvider,
     clientName,
     proposalDate,
@@ -370,6 +378,18 @@ export function CommercialBuilder({
               <section className="space-y-3">
                 <h3 className="text-sm font-semibold tracking-tight">Header & Client</h3>
                 <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label className="text-xs mb-1.5 block">Commercial Type</Label>
+                    <Select value={commercialType} onValueChange={v => setCommercialType(v as CommercialType)}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="client">Client Commercial</SelectItem>
+                        <SelectItem value="partner">Partner's Commercial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="col-span-2">
                     <Label className="text-xs mb-1.5 block">Service Provider</Label>
                     <Input
