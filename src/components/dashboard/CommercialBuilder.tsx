@@ -65,7 +65,7 @@ export interface ExtraFee {
 export type CommercialType = 'client' | 'partner';
 
 export interface CommercialData {
-  commercialType: CommercialType;
+  commercialType?: CommercialType;
   serviceProvider: string;
   clientName: string;
   proposalDate: Date;
