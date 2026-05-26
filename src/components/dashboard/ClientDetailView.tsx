@@ -35,9 +35,15 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, 
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold truncate">{clientData.client}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold truncate">{clientData.client}</h1>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs font-medium text-foreground/80 flex-shrink-0">
+                <Clock className="w-3 h-3" />
+                {formatClientAge(clientData.clientAgeMonths)}
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground">
-              {clientData.apiCount} APIs • {formatCalls(clientData.totalCalls)} total calls
+              {clientData.apiCount} APIs • {formatCalls(clientData.totalCalls)} total calls • Client since {formatClientAge(clientData.clientAgeMonths)} ago
             </p>
           </div>
           {onOpen360 && (
@@ -65,7 +71,7 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, 
 
         <TabsContent value="performance" className="mt-0 space-y-6">
           {/* Summary Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="metric-card">
               <p className="text-sm text-muted-foreground mb-1">Total Calls</p>
               <p className="text-3xl font-semibold">{formatCalls(clientData.totalCalls)}</p>
@@ -83,14 +89,6 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, 
                 {clientData.trend > 0 ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
                 {clientData.trend > 0 ? '+' : ''}{clientData.trend.toFixed(1)}%
               </div>
-            </div>
-            <div className="metric-card">
-              <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                Client Age
-              </p>
-              <p className="text-3xl font-semibold">{formatClientAge(clientData.clientAgeMonths)}</p>
-              <p className="text-xs text-muted-foreground mt-1">since onboarding</p>
             </div>
           </div>
 
