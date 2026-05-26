@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket, Users, Sparkles } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Zap, AlertTriangle, CheckCircle2, Ticket, Users, Sparkles, Mail, Clock, CalendarDays } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, RadialBarChart, RadialBar,
@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClientUsageData, APIData } from '@/lib/mockData';
+import { ClientUsageData, APIData, formatClientAge } from '@/lib/mockData';
 import { mockTickets } from '@/lib/mockTickets';
 import { cn } from '@/lib/utils';
 
