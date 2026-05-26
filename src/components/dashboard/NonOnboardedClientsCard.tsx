@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, ExternalLink, Mail, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getClientMeta, formatClientAge } from '@/lib/mockData';
 
 type TimeRange = '1m' | '3m' | '6m' | '1y' | 'all';
 
