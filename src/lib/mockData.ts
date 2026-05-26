@@ -250,6 +250,42 @@ export interface ClientUsageData {
   monthlyData: { month: string; calls: number; previousYear: number }[];
   notOnboarded: boolean;
   zeroHitAPIs: number;
+  spocEmail: string;
+  spocName: string;
+  clientAgeMonths: number;
+}
+
+function hashString(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h;
+}
+
+const SPOC_FIRST = ['Aarav', 'Priya', 'Rohan', 'Sara', 'Liam', 'Noah', 'Emma', 'Olivia', 'Maya', 'Kabir', 'Zara', 'Ishaan', 'Riya', 'Aditya', 'Neha'];
+const SPOC_LAST = ['Sharma', 'Patel', 'Kapoor', 'Mehta', 'Singh', 'Reddy', 'Iyer', 'Khan', 'Verma', 'Nair', 'Bose', 'Joshi'];
+
+export function getClientMeta(client: string): { spocName: string; spocEmail: string; clientAgeMonths: number } {
+  const h = hashString(client);
+  const first = SPOC_FIRST[h % SPOC_FIRST.length];
+  const last = SPOC_LAST[(h >>> 5) % SPOC_LAST.length];
+  const domain = client.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+  const ageMonths = 2 + (h % 70);
+  return {
+    spocName: `${first} ${last}`,
+    spocEmail: `${first.toLowerCase()}.${last.toLowerCase()}@${domain}`,
+    clientAgeMonths: ageMonths,
+  };
+}
+
+export function formatClientAge(months: number): string {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  if (y === 0) return `${m}mo`;
+  if (m === 0) return `${y}y`;
+  return `${y}y ${m}mo`;
 }
 
 export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
@@ -320,6 +356,7 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
       }),
       notOnboarded: nonOnboardedClients.has(client),
       zeroHitAPIs: Math.floor(Math.random() * 4),
+      ...getClientMeta(client),
     }))
     .sort((a, b) => b.totalCalls - a.totalCalls);
 }

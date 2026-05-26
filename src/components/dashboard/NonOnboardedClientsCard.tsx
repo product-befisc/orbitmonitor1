@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, ExternalLink, Mail, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getClientMeta, formatClientAge } from '@/lib/mockData';
 
 type TimeRange = '1m' | '3m' | '6m' | '1y' | 'all';
 
@@ -110,23 +111,37 @@ export function NonOnboardedClientsCard() {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-2 max-h-[260px] overflow-y-auto">
-          {clients.map((client) => (
-            <div
-              key={client.name}
-              className="flex items-center justify-between rounded-md border border-destructive/20 bg-destructive/[0.04] px-3 py-2"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                <span className="text-sm font-medium text-destructive">{client.name}</span>
+          {clients.map((client) => {
+            const meta = getClientMeta(client.name);
+            return (
+              <div
+                key={client.name}
+                className="rounded-md border border-destructive/20 bg-destructive/[0.04] px-3 py-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
+                    <span className="text-sm font-medium text-destructive truncate">{client.name}</span>
+                    <Badge variant="outline" className="text-[10px] gap-1 border-destructive/30 text-destructive/80 flex-shrink-0">
+                      <Clock className="w-2.5 h-2.5" />
+                      {formatClientAge(meta.clientAgeMonths)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {formatHits(client.hits)} hits
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-destructive/60" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 mt-1 ml-4 text-[11px] text-muted-foreground">
+                  <Mail className="w-3 h-3" />
+                  <span className="truncate">{meta.spocName} · </span>
+                  <a href={`mailto:${meta.spocEmail}`} className="text-primary/80 hover:underline truncate">{meta.spocEmail}</a>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {formatHits(client.hits)} hits
-                </span>
-                <ExternalLink className="w-3.5 h-3.5 text-destructive/60" />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
