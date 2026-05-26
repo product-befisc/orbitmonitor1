@@ -173,18 +173,29 @@ export function Client360View({ clientData, clientAPIs, allAPIs, onBack }: Props
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold truncate">{clientData.client}</h1>
             <Badge variant="secondary" className="ml-1">360° View</Badge>
+            <Badge variant="outline" className="gap-1">
+              <Clock className="w-3 h-3" />
+              Client since {formatClientAge(clientData.clientAgeMonths)} ago
+            </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Full trajectory · Usage, adoption & support — one screen, full story
+          <p className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap mt-0.5">
+            <span>Full trajectory · Usage, adoption & support — one screen, full story</span>
+            <span className="flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              SPOC: <span className="text-foreground">{clientData.spocName}</span>
+              <span className="text-muted-foreground">·</span>
+              <a href={`mailto:${clientData.spocEmail}`} className="text-primary hover:underline">{clientData.spocEmail}</a>
+            </span>
           </p>
         </div>
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+        <KPI icon={<CalendarDays className="w-4 h-4" />} label="Client Age" value={formatClientAge(clientData.clientAgeMonths)} sub="Onboarded" />
         <KPI icon={<Activity className="w-4 h-4" />} label="Total Calls" value={formatCalls(clientData.totalCalls)} />
         <KPI icon={<Zap className="w-4 h-4" />} label="APIs Used" value={`${usedCount}/${apiCatalog.length}`} sub={`${adoptionPct}% adoption`} />
         <KPI
