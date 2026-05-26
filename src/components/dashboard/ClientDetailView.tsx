@@ -1,11 +1,11 @@
-import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight, Flag, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ChevronRight, Flag, LayoutDashboard, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UsageChart } from './UsageChart';
 import { ClientAPIDateTable } from './ClientAPIDateTable';
 import { ClientSupportTicketsTab } from './ClientSupportTicketsTab';
 import { ClientIPWhitelistTab } from './ClientIPWhitelistTab';
-import { ClientUsageData, APIData } from '@/lib/mockData';
+import { ClientUsageData, APIData, formatClientAge } from '@/lib/mockData';
 import { hasNonWhitelistedIP } from '@/lib/mockClientIPs';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +65,7 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, 
 
         <TabsContent value="performance" className="mt-0 space-y-6">
           {/* Summary Metrics */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="metric-card">
               <p className="text-sm text-muted-foreground mb-1">Total Calls</p>
               <p className="text-3xl font-semibold">{formatCalls(clientData.totalCalls)}</p>
@@ -83,6 +83,14 @@ export function ClientDetailView({ clientData, clientAPIs, onBack, onSelectAPI, 
                 {clientData.trend > 0 ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
                 {clientData.trend > 0 ? '+' : ''}{clientData.trend.toFixed(1)}%
               </div>
+            </div>
+            <div className="metric-card">
+              <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                Client Age
+              </p>
+              <p className="text-3xl font-semibold">{formatClientAge(clientData.clientAgeMonths)}</p>
+              <p className="text-xs text-muted-foreground mt-1">since onboarding</p>
             </div>
           </div>
 
