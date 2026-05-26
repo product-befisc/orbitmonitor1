@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, ChevronRight, Search, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronRight, Search, Users, Mail, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ClientUsageData } from '@/lib/mockData';
+import { ClientUsageData, formatClientAge } from '@/lib/mockData';
 import { Input } from '@/components/ui/input';
 
 interface ClientListProps {
