@@ -71,7 +71,17 @@ export function ClientList({ clients, onSelectClient }: ClientListProps) {
 
               <div className="relative flex-1 min-w-0">
                 <span className="font-medium truncate block group-hover:text-primary transition-colors">{client.client}</span>
-                <span className="text-xs text-muted-foreground">{client.apiCount} APIs</span>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                  <span>{client.apiCount} APIs</span>
+                  <span className="flex items-center gap-1 truncate">
+                    <Mail className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{client.spocEmail}</span>
+                  </span>
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/60 text-foreground/80 flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    {formatClientAge(client.clientAgeMonths)}
+                  </span>
+                </div>
               </div>
 
               <div className="relative text-right flex-shrink-0">
