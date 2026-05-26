@@ -356,6 +356,7 @@ export function getClientUsageData(apis: APIData[]): ClientUsageData[] {
       }),
       notOnboarded: nonOnboardedClients.has(client),
       zeroHitAPIs: Math.floor(Math.random() * 4),
+      ...getClientMeta(client),
     }))
     .sort((a, b) => b.totalCalls - a.totalCalls);
 }
